@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -26,6 +27,8 @@ const registerSchema = z.object({
 
 export default function AuthPage() {
   const navigate = useNavigate();
+  const { login, register, redirectPath, setRedirectPath } = useAuth();
+  const [activeTab, setActiveTab] = useState("login");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,13 +55,19 @@ export default function AuthPage() {
     setIsLoading(true);
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1500));
+    
+    login({ email: loginForm.email, name: "User" });
     setIsLoading(false);
     
     toast({
       title: "Login successful! 🎉",
-      description: "Welcome back to SecureChat",
+      description: "Welcome back to SentinelAI",
     });
-    navigate("/dashboard");
+    
+    // Redirect to stored path or dashboard
+    const destination = redirectPath || "/dashboard";
+    setRedirectPath(null);
+    navigate(destination);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -77,13 +86,19 @@ export default function AuthPage() {
 
     setIsLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 1500));
+    
+    register({ email: registerForm.email, name: registerForm.name });
     setIsLoading(false);
     
     toast({
       title: "Account created! 🎉",
-      description: "Welcome to SecureChat. Start analyzing messages now.",
+      description: "Welcome to SentinelAI. Start analyzing messages now.",
     });
-    navigate("/dashboard");
+    
+    // Redirect to stored path or dashboard
+    const destination = redirectPath || "/dashboard";
+    setRedirectPath(null);
+    navigate(destination);
   };
 
   const handleGoogleAuth = () => {
@@ -103,7 +118,7 @@ export default function AuthPage() {
           <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-primary">
             <Shield className="h-6 w-6 text-primary-foreground" />
           </div>
-          <span className="text-2xl font-bold text-foreground">SecureChat</span>
+          <span className="text-2xl font-bold text-foreground">SentinelAI</span>
         </Link>
 
         <Card className="bg-card border-border shadow-xl">
@@ -114,7 +129,7 @@ export default function AuthPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Register</TabsTrigger>
@@ -209,6 +224,17 @@ export default function AuthPage() {
                     </svg>
                     Continue with Google
                   </Button>
+
+                  <p className="text-center text-sm text-muted-foreground mt-4">
+                    Don't have an account?{" "}
+                    <button 
+                      type="button"
+                      onClick={() => setActiveTab("register")}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Sign up
+                    </button>
+                  </p>
                 </form>
               </TabsContent>
 
@@ -339,6 +365,17 @@ export default function AuthPage() {
                     </svg>
                     Continue with Google
                   </Button>
+
+                  <p className="text-center text-sm text-muted-foreground mt-4">
+                    Already have an account?{" "}
+                    <button 
+                      type="button"
+                      onClick={() => setActiveTab("login")}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Login
+                    </button>
+                  </p>
                 </form>
               </TabsContent>
             </Tabs>

@@ -25,8 +25,19 @@ export function Footer() {
   const navigate = useNavigate();
 
   const handleNavClick = (href: string, e: React.MouseEvent) => {
-    if (href.startsWith("/#")) {
-      e.preventDefault();
+    e.preventDefault();
+    
+    if (href === "/") {
+      // Scroll to top
+      if (location.pathname === "/") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        navigate("/");
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 100);
+      }
+    } else if (href.startsWith("/#")) {
       const sectionId = href.replace("/#", "");
       if (location.pathname !== "/") {
         navigate("/");
@@ -36,6 +47,12 @@ export function Footer() {
       } else {
         document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
       }
+    } else {
+      navigate(href);
+      // Scroll to top for internal pages
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 100);
     }
   };
 
@@ -73,13 +90,13 @@ export function Footer() {
             <ul className="space-y-3">
               {footerLinks.product.map((link) => (
                 <li key={link.label}>
-                  <Link
-                    to={link.href}
+                  <a
+                    href={link.href}
                     onClick={(e) => handleNavClick(link.href, e)}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     {link.label}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -91,12 +108,13 @@ export function Footer() {
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  <a
+                    href={link.href}
+                    onClick={(e) => handleNavClick(link.href, e)}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     {link.label}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -108,12 +126,13 @@ export function Footer() {
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  <a
+                    href={link.href}
+                    onClick={(e) => handleNavClick(link.href, e)}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     {link.label}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>

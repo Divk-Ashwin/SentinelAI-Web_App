@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -12,10 +13,19 @@ import {
   AlertCircle,
   Share2,
   Download,
-  Copy
+  Trash2,
+  Ban,
+  Users,
+  PhoneCall,
+  ThumbsUp,
+  ThumbsDown,
+  Info
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { ShareModal } from "./ShareModal";
 import type { AnalysisResult } from "@/pages/Dashboard";
+import { translations, type Language } from "@/lib/translations";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AnalysisReportProps {
   result: AnalysisResult;
@@ -23,6 +33,14 @@ interface AnalysisReportProps {
 }
 
 export function AnalysisReport({ result, language }: AnalysisReportProps) {
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [feedback, setFeedback] = useState<'yes' | 'no' | null>(null);
+  
+  const t = (key: keyof typeof translations.english): string => {
+    const lang = language as Language;
+    return translations[lang]?.[key] || translations.english[key] || key;
+  };
+
   const getRiskColor = () => {
     switch (result.riskLevel) {
       case "high": return "text-destructive";
@@ -47,17 +65,28 @@ export function AnalysisReport({ result, language }: AnalysisReportProps) {
     }
   };
 
-  const handleShare = () => {
-    toast({
-      title: "Link Copied!",
-      description: "Share link copied to clipboard. Valid for 7 days.",
-    });
+  const getRiskLevelText = () => {
+    switch (result.riskLevel) {
+      case "high": return t("high");
+      case "medium": return t("medium");
+      case "low": return t("low");
+    }
   };
 
   const handleDownload = () => {
     toast({
       title: "Downloading Report",
       description: "Your PDF report is being generated.",
+    });
+  };
+
+  const handleFeedback = (type: 'yes' | 'no') => {
+    setFeedback(type);
+    toast({
+      title: type === 'yes' ? "Thank you! 👍" : "Thanks for feedback",
+      description: type === 'yes' 
+        ? "We're glad this helped!" 
+        : "We'll work to improve our analysis.",
     });
   };
 
@@ -74,10 +103,21 @@ export function AnalysisReport({ result, language }: AnalysisReportProps) {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <span className={`text-sm font-semibold uppercase ${getRiskColor()}`}>
-                  {result.riskLevel} RISK
+                  {t("riskLevel")}: {getRiskLevelText()}
                 </span>
-                <span className="text-sm text-muted-foreground">
-                  • Confidence: {result.confidence}%
+                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                  • {t("confidence")}: {result.confidence}%
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="h-3 w-3 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="text-xs">
+                        Confidence based on: Message pattern matching (35%), sender reputation (25%), 
+                        link analysis (20%), content keywords (20%)
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
                 </span>
               </div>
               <div className="flex items-center gap-4 mb-4">
@@ -95,7 +135,7 @@ export function AnalysisReport({ result, language }: AnalysisReportProps) {
         </CardContent>
       </Card>
 
-      {/* Quick Summary */}
+      {/* Quick Summary - Verdict */}
       <Card className="bg-card border-border">
         <CardContent className="p-6">
           <div className="grid md:grid-cols-2 gap-6">
@@ -106,28 +146,125 @@ export function AnalysisReport({ result, language }: AnalysisReportProps) {
                 ) : (
                   <XCircle className="h-5 w-5 text-destructive" />
                 )}
-                <span className="font-semibold">Verdict</span>
+                <span className="font-semibold">{t("verdict")}</span>
               </div>
-              <p className="text-foreground">{result.verdict}</p>
+              <p className="text-foreground">
+                {result.riskLevel === "high" ? t("verdictHigh") : 
+                 result.riskLevel === "medium" ? t("verdictMedium") : t("verdictLow")}
+              </p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-primary" />
-                <span className="font-semibold">Recommended Action</span>
+                <span className="font-semibold">{t("recommendedAction")}</span>
               </div>
-              <p className="text-foreground">{result.action}</p>
+              <p className="text-foreground">
+                {result.riskLevel === "high" ? t("actionHigh") : 
+                 result.riskLevel === "medium" ? t("actionMedium") : t("actionLow")}
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Threat Indicators */}
+      {/* Simplified Recommendations - What Should You Do? */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            {t("whatToDo")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Immediate Actions */}
+          <div>
+            <h4 className="flex items-center gap-2 font-semibold text-success mb-4">
+              <CheckCircle className="h-5 w-5" />
+              {t("immediateActions")}
+            </h4>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="flex items-center gap-3 p-3 bg-success/10 rounded-lg">
+                <Trash2 className="h-5 w-5 text-success flex-shrink-0" />
+                <span className="text-sm">{t("deleteMessage")}</span>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-success/10 rounded-lg">
+                <Ban className="h-5 w-5 text-success flex-shrink-0" />
+                <span className="text-sm">{t("blockNumber")}</span>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-success/10 rounded-lg">
+                <Users className="h-5 w-5 text-success flex-shrink-0" />
+                <span className="text-sm">{t("tellFriends")}</span>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-success/10 rounded-lg">
+                <PhoneCall className="h-5 w-5 text-success flex-shrink-0" />
+                <span className="text-sm">{t("callBank")}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Do NOT */}
+          <div>
+            <h4 className="flex items-center gap-2 font-semibold text-destructive mb-4">
+              <XCircle className="h-5 w-5" />
+              {t("doNot")}
+            </h4>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg">
+                <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                <span className="text-sm">{t("dontClickLinks")}</span>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg">
+                <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                <span className="text-sm">{t("dontShareOTP")}</span>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg">
+                <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                <span className="text-sm">{t("dontCallBack")}</span>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg">
+                <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                <span className="text-sm">{t("dontSendMoney")}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* If Already Clicked */}
+          {result.riskLevel !== "low" && (
+            <div>
+              <h4 className="flex items-center gap-2 font-semibold text-warning mb-4">
+                <AlertTriangle className="h-5 w-5" />
+                {t("ifAlreadyClicked")}
+              </h4>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="flex items-center gap-3 p-3 bg-warning/10 rounded-lg">
+                  <PhoneCall className="h-5 w-5 text-warning flex-shrink-0" />
+                  <span className="text-sm">{t("callBankImmediately")}</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-warning/10 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0" />
+                  <span className="text-sm">{t("reportCyberCrime")}</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-warning/10 rounded-lg">
+                  <Ban className="h-5 w-5 text-warning flex-shrink-0" />
+                  <span className="text-sm">{t("blockCard")}</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-warning/10 rounded-lg">
+                  <Shield className="h-5 w-5 text-warning flex-shrink-0" />
+                  <span className="text-sm">{t("changePasswords")}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Why Is This Dangerous? */}
       {result.threats.length > 0 && (
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              Threat Indicators Found
+              {t("whyDangerous")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -151,172 +288,104 @@ export function AnalysisReport({ result, language }: AnalysisReportProps) {
                 </div>
               </div>
             ))}
+            
+            {/* Additional Analysis Details */}
+            <div className="grid md:grid-cols-2 gap-4 pt-4 border-t border-border">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">{t("senderAnalysis")}</p>
+                <div className="space-y-1">
+                  <p className="text-sm flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    {result.senderAnalysis.phone}
+                  </p>
+                  {result.senderAnalysis.reportCount > 0 && (
+                    <p className="text-sm text-destructive">
+                      ⚠️ Reported {result.senderAnalysis.reportCount} times as spam
+                    </p>
+                  )}
+                </div>
+              </div>
+              {result.contentAnalysis.hasLinks && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">{t("contentAnalysis")}</p>
+                  <div className="space-y-1">
+                    <p className="text-sm text-destructive flex items-center gap-2">
+                      <Link2 className="h-4 w-4" />
+                      {t("suspiciousLink")}: {result.contentAnalysis.linkDomain}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Sender & Content Analysis */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Sender Analysis */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Phone className="h-5 w-5 text-primary" />
-              Sender Analysis
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-3 bg-secondary/50 rounded-lg">
-              <p className="text-sm text-muted-foreground">Phone Number</p>
-              <p className="font-medium">{result.senderAnalysis.phone || "Unknown"}</p>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                {result.senderAnalysis.inContacts ? (
-                  <CheckCircle className="h-4 w-4 text-success" />
-                ) : (
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                )}
-                <span className="text-sm">
-                  {result.senderAnalysis.inContacts ? "In your contacts" : "Not in your contacts"}
-                </span>
-              </div>
-              {result.senderAnalysis.reportCount > 0 && (
-                <div className="flex items-center gap-2">
-                  <XCircle className="h-4 w-4 text-destructive" />
-                  <span className="text-sm">
-                    Reported {result.senderAnalysis.reportCount} times as spam
-                  </span>
-                </div>
-              )}
-              {result.senderAnalysis.isNew && (
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-warning" />
-                  <span className="text-sm">Recently activated number</span>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Content Analysis */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Link2 className="h-5 w-5 text-primary" />
-              Content Analysis
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              {result.contentAnalysis.hasLinks && (
-                <div className="flex items-center gap-2">
-                  <XCircle className="h-4 w-4 text-destructive" />
-                  <span className="text-sm">
-                    Suspicious link: {result.contentAnalysis.linkDomain}
-                  </span>
-                </div>
-              )}
-              {result.contentAnalysis.hasUrgency && (
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                  <span className="text-sm">High urgency language detected</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-primary" />
-                <span className="text-sm">
-                  Grammar score: {result.contentAnalysis.grammarScore}/10
-                </span>
-              </div>
-            </div>
-            {result.contentAnalysis.keywords.length > 0 && (
-              <div className="pt-2 border-t border-border">
-                <p className="text-sm text-muted-foreground mb-2">Suspicious keywords:</p>
-                <div className="flex flex-wrap gap-2">
-                  {result.contentAnalysis.keywords.map((keyword, index) => (
-                    <span 
-                      key={index}
-                      className="px-2 py-1 text-xs bg-destructive/10 text-destructive rounded-full"
-                    >
-                      {keyword}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recommendations */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary" />
-            Recommendations
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div>
-              <h4 className="flex items-center gap-2 font-semibold text-success mb-4">
-                <CheckCircle className="h-5 w-5" />
-                What To Do
-              </h4>
-              <ul className="space-y-3">
-                {result.recommendations.do.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm">
-                    <span className="text-success mt-1">✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="flex items-center gap-2 font-semibold text-destructive mb-4">
-                <XCircle className="h-5 w-5" />
-                What NOT To Do
-              </h4>
-              <ul className="space-y-3">
-                {result.recommendations.dont.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm">
-                    <span className="text-destructive mt-1">✗</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Share & Download */}
+      {/* Save & Share */}
       <Card className="bg-card border-border">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
               <h4 className="font-semibold flex items-center gap-2">
                 <Share2 className="h-5 w-5 text-primary" />
-                Save This Analysis
+                {t("saveAnalysis")}
               </h4>
               <p className="text-sm text-muted-foreground">
-                Keep evidence for reporting or warning others
+                {t("keepEvidence")}
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap justify-center">
               <Button variant="outline" onClick={handleDownload}>
                 <Download className="h-4 w-4 mr-2" />
-                Download PDF
+                {t("downloadPDF")}
               </Button>
-              <Button variant="outline" onClick={handleShare}>
-                <Copy className="h-4 w-4 mr-2" />
-                Copy Share Link
+              <Button 
+                className="bg-gradient-primary"
+                onClick={() => setShowShareModal(true)}
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                {t("shareAnalysis")}
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Feedback Section */}
+      <Card className="bg-card border-border">
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">Was this analysis helpful?</p>
+            <div className="flex gap-3">
+              <Button
+                variant={feedback === 'yes' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleFeedback('yes')}
+                disabled={feedback !== null}
+              >
+                <ThumbsUp className="h-4 w-4 mr-2" />
+                Yes
+              </Button>
+              <Button
+                variant={feedback === 'no' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleFeedback('no')}
+                disabled={feedback !== null}
+              >
+                <ThumbsDown className="h-4 w-4 mr-2" />
+                No
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Share Modal */}
+      <ShareModal 
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        result={result}
+      />
     </div>
   );
 }
