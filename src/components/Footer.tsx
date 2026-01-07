@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { Shield, Mail, Twitter, Facebook, Linkedin } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Shield, Mail, Linkedin, Github } from "lucide-react";
 
 const footerLinks = {
   product: [
@@ -16,11 +16,29 @@ const footerLinks = {
   legal: [
     { label: "Privacy Policy", href: "/privacy" },
     { label: "Terms & Conditions", href: "/terms" },
-    { label: "Data Security", href: "/security" },
+    { label: "Data Security", href: "/data-security" },
   ],
 };
 
 export function Footer() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleNavClick = (href: string, e: React.MouseEvent) => {
+    if (href.startsWith("/#")) {
+      e.preventDefault();
+      const sectionId = href.replace("/#", "");
+      if (location.pathname !== "/") {
+        navigate("/");
+        setTimeout(() => {
+          document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      } else {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
+
   return (
     <footer className="bg-card border-t border-border">
       <div className="container mx-auto px-4 py-12">
@@ -31,23 +49,20 @@ export function Footer() {
               <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-primary">
                 <Shield className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">SecureChat</span>
+              <span className="text-xl font-bold text-foreground">SentinelAI</span>
             </Link>
             <p className="text-muted-foreground text-sm mb-4 max-w-xs">
               AI-powered SMS fraud detection protecting rural India from smishing attacks.
             </p>
             <div className="flex items-center gap-4">
-              <a href="mailto:support@securechat.com" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="https://google.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                 <Mail className="h-5 w-5" />
               </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="https://google.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                 <Linkedin className="h-5 w-5" />
+              </a>
+              <a href="https://google.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                <Github className="h-5 w-5" />
               </a>
             </div>
           </div>
@@ -60,6 +75,7 @@ export function Footer() {
                 <li key={link.label}>
                   <Link
                     to={link.href}
+                    onClick={(e) => handleNavClick(link.href, e)}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {link.label}
@@ -106,7 +122,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © 2026 SecureChat. All rights reserved.
+            © 2026 SentinelAI. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground">
             Made with ❤️ for rural India
