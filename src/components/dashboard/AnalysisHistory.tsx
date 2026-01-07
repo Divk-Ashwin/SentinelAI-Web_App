@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   History, 
   Search, 
@@ -11,9 +12,12 @@ import {
   Shield,
   AlertTriangle,
   CheckCircle,
-  TrendingUp
+  TrendingUp,
+  XCircle
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { ShareModal } from "./ShareModal";
+import type { AnalysisResult } from "@/pages/Dashboard";
 
 interface HistoryItem {
   id: string;
@@ -23,6 +27,7 @@ interface HistoryItem {
   riskScore: number;
   messagePreview: string;
   sender: string;
+  fullResult?: AnalysisResult;
 }
 
 const mockHistory: HistoryItem[] = [
@@ -34,6 +39,20 @@ const mockHistory: HistoryItem[] = [
     riskScore: 85,
     messagePreview: "Your account will be suspended unless you verify immediately at bit.ly/xyz...",
     sender: "+91 98765 43210",
+    fullResult: {
+      riskScore: 85,
+      riskLevel: "high",
+      confidence: 92,
+      verdict: "This message is likely a smishing attempt",
+      action: "Do NOT click links or share personal information",
+      threats: [
+        { title: "Suspicious Link Detected", description: "The message contains a shortened URL", severity: "high" },
+        { title: "Urgency Tactics Detected", description: "The message creates artificial time pressure", severity: "high" },
+      ],
+      senderAnalysis: { phone: "+91 98765 43210", inContacts: false, reportCount: 47, isNew: true },
+      contentAnalysis: { hasLinks: true, linkDomain: "bit.ly/xyz", hasUrgency: true, grammarScore: 6, keywords: ["urgent", "verify", "suspended"] },
+      recommendations: { do: ["Delete message", "Block sender"], dont: ["Don't click links", "Don't share info"] },
+    },
   },
   {
     id: "2",
@@ -43,6 +62,19 @@ const mockHistory: HistoryItem[] = [
     riskScore: 55,
     messagePreview: "Congratulations! You won ₹10 lakhs in our lucky draw. Click here to claim...",
     sender: "+91 87654 32109",
+    fullResult: {
+      riskScore: 55,
+      riskLevel: "medium",
+      confidence: 78,
+      verdict: "This message shows some suspicious characteristics",
+      action: "Verify the sender through official channels before responding",
+      threats: [
+        { title: "Prize Scam Pattern", description: "Matches known lottery scam patterns", severity: "medium" },
+      ],
+      senderAnalysis: { phone: "+91 87654 32109", inContacts: false, reportCount: 12, isNew: false },
+      contentAnalysis: { hasLinks: true, linkDomain: "prize-claim.xyz", hasUrgency: false, grammarScore: 7, keywords: ["won", "lakhs", "claim"] },
+      recommendations: { do: ["Verify with official sources", "Report if suspicious"], dont: ["Don't share bank details", "Don't pay any fees"] },
+    },
   },
   {
     id: "3",
@@ -52,6 +84,17 @@ const mockHistory: HistoryItem[] = [
     riskScore: 15,
     messagePreview: "Your OTP is 123456. Valid for 10 minutes. Do not share with anyone.",
     sender: "HDFCBK",
+    fullResult: {
+      riskScore: 15,
+      riskLevel: "low",
+      confidence: 95,
+      verdict: "This message appears to be legitimate",
+      action: "Safe to proceed, but always stay vigilant",
+      threats: [],
+      senderAnalysis: { phone: "HDFCBK", inContacts: true, reportCount: 0, isNew: false },
+      contentAnalysis: { hasLinks: false, hasUrgency: false, grammarScore: 9, keywords: ["OTP"] },
+      recommendations: { do: ["Use OTP if you initiated transaction", "Never share OTP"], dont: ["Don't share with anyone calling"] },
+    },
   },
   {
     id: "4",
@@ -76,7 +119,6 @@ const mockHistory: HistoryItem[] = [
 const quickStats = {
   totalAnalyzed: 47,
   threatsDetected: 12,
-  moneySaved: "₹85,000",
   reportsShared: 5,
 };
 
@@ -84,6 +126,10 @@ export function AnalysisHistory() {
   const [history, setHistory] = useState(mockHistory);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "high" | "medium" | "low">("all");
+  const [selectedReport, setSelectedReport] = useState<HistoryItem | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareResult, setShareResult] = useState<AnalysisResult | null>(null);
 
   const filteredHistory = history.filter((item) => {
     const matchesSearch = 
@@ -99,6 +145,23 @@ export function AnalysisHistory() {
       title: "Analysis Deleted",
       description: "The analysis has been removed from your history.",
     });
+  };
+
+  const handleViewReport = (item: HistoryItem) => {
+    setSelectedReport(item);
+    setShowReportModal(true);
+  };
+
+  const handleShare = (item: HistoryItem) => {
+    if (item.fullResult) {
+      setShareResult(item.fullResult);
+      setShowShareModal(true);
+    } else {
+      toast({
+        title: "Share Report",
+        description: "Opening share options...",
+      });
+    }
   };
 
   const getRiskColor = (level: string) => {
@@ -125,6 +188,8 @@ export function AnalysisHistory() {
     }
   };
 
+  const protectionRate = Math.round((quickStats.threatsDetected / quickStats.totalAnalyzed) * 100);
+
   return (
     <div className="space-y-6">
       {/* Quick Stats */}
@@ -144,8 +209,8 @@ export function AnalysisHistory() {
               <p className="text-sm text-primary-foreground/80">Threats Detected</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-primary-foreground">{quickStats.moneySaved}</p>
-              <p className="text-sm text-primary-foreground/80">Potentially Saved</p>
+              <p className="text-3xl font-bold text-primary-foreground">{protectionRate}%</p>
+              <p className="text-sm text-primary-foreground/80">Protection Rate</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-bold text-primary-foreground">{quickStats.reportsShared}</p>
@@ -206,7 +271,7 @@ export function AnalysisHistory() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`text-sm font-semibold uppercase ${getRiskColor(item.riskLevel)}`}>
-                        {item.riskLevel} RISK
+                        {item.riskLevel} RISK ({item.riskScore}/100)
                       </span>
                       <span className="text-sm text-muted-foreground">
                         • {item.date}, {item.time}
@@ -220,10 +285,20 @@ export function AnalysisHistory() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => handleViewReport(item)}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => handleShare(item)}
+                    >
                       <Share2 className="h-4 w-4" />
                     </Button>
                     <Button 
@@ -241,6 +316,115 @@ export function AnalysisHistory() {
           )}
         </CardContent>
       </Card>
+
+      {/* View Report Modal */}
+      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              Analysis Report
+            </DialogTitle>
+          </DialogHeader>
+          {selectedReport && (
+            <div className="space-y-4">
+              {/* Risk Score */}
+              <div className={`p-4 rounded-lg ${
+                selectedReport.riskLevel === "high" ? "bg-destructive/10" :
+                selectedReport.riskLevel === "medium" ? "bg-warning/10" : "bg-success/10"
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getRiskBg(selectedReport.riskLevel)} text-primary-foreground`}>
+                    {getRiskIcon(selectedReport.riskLevel)}
+                  </div>
+                  <div>
+                    <p className={`text-2xl font-bold ${getRiskColor(selectedReport.riskLevel)}`}>
+                      {selectedReport.riskScore}/100
+                    </p>
+                    <p className="text-sm text-muted-foreground uppercase">
+                      {selectedReport.riskLevel} Risk
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Message */}
+              <div className="p-4 bg-secondary/50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Message</p>
+                <p className="text-foreground">{selectedReport.messagePreview}</p>
+              </div>
+
+              {/* Sender */}
+              <div className="p-4 bg-secondary/50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Sender</p>
+                <p className="text-foreground">{selectedReport.sender}</p>
+              </div>
+
+              {/* Threats if available */}
+              {selectedReport.fullResult?.threats && selectedReport.fullResult.threats.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Threats Found:</p>
+                  {selectedReport.fullResult.threats.map((threat, i) => (
+                    <div key={i} className="flex items-start gap-2 p-3 bg-destructive/10 rounded-lg">
+                      <XCircle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-sm">{threat.title}</p>
+                        <p className="text-xs text-muted-foreground">{threat.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Date */}
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Analyzed on: {selectedReport.date} at {selectedReport.time}</span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => {
+                    setShowReportModal(false);
+                    if (selectedReport.fullResult) {
+                      setShareResult(selectedReport.fullResult);
+                      setShowShareModal(true);
+                    }
+                  }}
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-1 text-destructive"
+                  onClick={() => {
+                    handleDelete(selectedReport.id);
+                    setShowReportModal(false);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Modal */}
+      {shareResult && (
+        <ShareModal 
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setShareResult(null);
+          }}
+          result={shareResult}
+        />
+      )}
     </div>
   );
 }
