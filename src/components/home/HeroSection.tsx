@@ -1,8 +1,9 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, CheckCircle, Users, Target } from "lucide-react";
+import { Shield, CheckCircle, Users, Target, MapPin } from "lucide-react";
 import heroImage from "@/assets/hero-illustration.png";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 const trustIndicators = [
   { icon: Users, label: "10,000+", sublabel: "Messages Analyzed" },
@@ -11,11 +12,29 @@ const trustIndicators = [
 ];
 
 export function HeroSection() {
+  const navigate = useNavigate();
+  const { isAuthenticated, setRedirectPath } = useAuth();
+
   const handleDownload = () => {
     toast({
       title: "Coming Soon! 📱",
       description: "Our mobile app is under development. Stay tuned!",
+      duration: 3000,
     });
+  };
+
+  const handleAnalyzeClick = () => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    } else {
+      setRedirectPath("/dashboard");
+      toast({
+        title: "Please login first",
+        description: "You need to be logged in to analyze messages",
+        duration: 3000,
+      });
+      navigate("/auth");
+    }
   };
 
   return (
@@ -29,30 +48,38 @@ export function HeroSection() {
           {/* Content */}
           <div className="space-y-8 animate-fade-in-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-              <Shield className="h-4 w-4" />
-              AI-Powered Protection
+              <MapPin className="h-4 w-4" />
+              Protecting the Unprotected
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-              Stop Smishing{" "}
-              <span className="text-gradient">Before It Stops You</span>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
+              Rural India Deserves{" "}
+              <span className="text-gradient">Protection from SMS Fraud</span>
             </h1>
             
-            <p className="text-lg md:text-xl text-muted-foreground max-w-xl">
-              AI-powered SMS fraud detection protecting rural India from financial scams. 
-              Analyze suspicious messages instantly and stay safe.
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xl">
+              Every day, thousands of rural Indians lose their hard-earned money to fake SMS messages. 
+              SentinelAI uses AI to detect scams instantly—in your language, for free, forever.
             </p>
+
+            {/* Stats callout */}
+            <div className="flex items-center gap-2 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <span className="text-destructive text-2xl font-bold">₹1,200 Cr</span>
+              <span className="text-sm text-muted-foreground">lost by rural Indians to SMS scams annually</span>
+            </div>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/dashboard">
-                <Button size="lg" className="w-full sm:w-auto bg-gradient-primary hover:opacity-90 transition-opacity text-lg px-8">
-                  Analyze a Message Now
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                className="w-full sm:w-auto bg-gradient-primary hover:opacity-90 transition-opacity text-base sm:text-lg px-8"
+                onClick={handleAnalyzeClick}
+              >
+                Analyze a Message Now
+              </Button>
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="w-full sm:w-auto text-lg px-8"
+                className="w-full sm:w-auto text-base sm:text-lg px-8"
                 onClick={handleDownload}
               >
                 Download Mobile App
@@ -60,7 +87,7 @@ export function HeroSection() {
             </div>
 
             {/* Trust Indicators */}
-            <div className="flex flex-wrap gap-8 pt-8 border-t border-border/50">
+            <div className="flex flex-wrap gap-6 sm:gap-8 pt-8 border-t border-border/50">
               {trustIndicators.map((item) => (
                 <div key={item.label} className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
@@ -76,11 +103,11 @@ export function HeroSection() {
           </div>
 
           {/* Hero Image */}
-          <div className="relative lg:block animate-float">
+          <div className="relative hidden lg:block animate-float">
             <div className="relative">
               <img
                 src={heroImage}
-                alt="SecureChat SMS Protection"
+                alt="SentinelAI SMS Protection"
                 className="w-full max-w-lg mx-auto rounded-2xl shadow-2xl"
               />
               {/* Floating badges */}
