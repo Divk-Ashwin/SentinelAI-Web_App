@@ -12,7 +12,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <Navbar />
-      <main className="overflow-x-hidden">
+      <main className="overflow-x-hidden pt-16">
         <HeroSection />
         <FeaturesSection />
         <HowItWorksSection />

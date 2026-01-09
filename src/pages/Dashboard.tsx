@@ -468,27 +468,52 @@ export default function Dashboard() {
                           <Phone className="h-4 w-4" />
                           Sender Phone Number *
                         </Label>
-                        <Input
-                          id="phone"
-                          type="tel"
-                          inputMode="numeric"
-                          placeholder="+91 XXXXXXXXXX"
-                          value={formData.phone}
-                          onChange={handlePhoneChange}
-                          onKeyPress={(e) => {
-                            if (!/[\d+]/.test(e.key)) {
-                              e.preventDefault();
-                            }
-                          }}
-                          className={`${
-                            phoneValid === true ? "border-success" : 
-                            phoneValid === false ? "border-destructive" : ""
-                          }`}
-                        />
+                        <div className="relative">
+                          <Input
+                            id="phone"
+                            type="tel"
+                            inputMode="numeric"
+                            placeholder="+91 XXXXXXXXXX"
+                            value={formData.phone}
+                            onChange={handlePhoneChange}
+                            onKeyPress={(e) => {
+                              if (!/[\d+]/.test(e.key)) {
+                                e.preventDefault();
+                                // Show temporary error feedback
+                                setPhoneError("⚠️ Numbers only");
+                                setTimeout(() => {
+                                  if (formData.phone.length === 13 && /^\+91\d{10}$/.test(formData.phone)) {
+                                    setPhoneError("");
+                                  } else if (formData.phone.length > 0) {
+                                    setPhoneError("Enter valid Indian mobile number (+91 XXXXXXXXXX)");
+                                  } else {
+                                    setPhoneError("");
+                                  }
+                                }, 2000);
+                              }
+                            }}
+                            className={`pr-10 transition-colors ${
+                              phoneValid === true 
+                                ? "border-[#00BA7C] focus-visible:ring-[#00BA7C]" 
+                                : phoneValid === false 
+                                ? "border-destructive focus-visible:ring-destructive" 
+                                : ""
+                            }`}
+                          />
+                          {phoneValid === true && (
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#00BA7C] font-bold">
+                              ✓
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Format: +91 followed by 10 digits (numbers only)
+                        </p>
                         {phoneError && (
-                          <p className="text-sm text-destructive">{phoneError}</p>
+                          <p className="text-xs text-destructive mt-1 animate-pulse">
+                            {phoneError}
+                          </p>
                         )}
-                        <p className="text-xs text-muted-foreground">Format: +91 XXXXXXXXXX</p>
                       </div>
 
                       {/* Category */}
