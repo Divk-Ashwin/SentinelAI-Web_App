@@ -17,7 +17,7 @@ export default function About() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="container mx-auto px-4 py-16">
+      <main className="container mx-auto px-4 py-16 pt-24">
         {/* Mission */}
         <section className="max-w-3xl mx-auto text-center mb-20">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-6">

@@ -1,6 +1,6 @@
 import { TrendingUp, AlertTriangle, Users, IndianRupee } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, CartesianGrid, LabelList } from "recharts";
 
 const globalTrendData = [
   { year: '2020', loss: 5.2 },
@@ -15,10 +15,10 @@ const victimDistribution = [
 ];
 
 const sectorData = [
-  { sector: 'Banking', percentage: 43 },
-  { sector: 'Govt Schemes', percentage: 28 },
-  { sector: 'E-commerce', percentage: 18 },
-  { sector: 'Others', percentage: 11 },
+  { sector: 'Banking & Finance', percentage: 43 },
+  { sector: 'E-commerce & Delivery', percentage: 28 },
+  { sector: 'Government Schemes', percentage: 18 },
+  { sector: 'Lottery & Prizes', percentage: 11 },
 ];
 
 const globalStats = [
@@ -186,29 +186,73 @@ export function StatisticsSection() {
                 </CardContent>
               </Card>
 
-              {/* Bar Chart - Sectors */}
-              <Card className="bg-card border-border">
-                <CardContent className="p-4">
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Targeted Sectors</p>
-                  <div className="h-40">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={sectorData} layout="vertical">
-                        <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
-                        <YAxis type="category" dataKey="sector" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} width={70} />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'hsl(var(--card))', 
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px',
-                          }}
-                        />
-                        <Bar dataKey="percentage" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Bar Chart - Sectors - Full Width */}
             </div>
+            
+            {/* Improved Horizontal Bar Chart for Sectors */}
+            <Card className="bg-card border-border mt-4">
+              <CardContent className="p-6">
+                <div className="text-center mb-4">
+                  <h4 className="text-lg font-bold text-foreground">Top Scam Targets in India (2023)</h4>
+                  <p className="text-sm text-muted-foreground">Percentage of total smishing attacks by sector</p>
+                </div>
+                <div 
+                  className="h-[300px]" 
+                  role="img" 
+                  aria-label="Bar chart showing percentage of smishing attacks by sector"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      layout="horizontal"
+                      data={sectorData}
+                      margin={{ top: 20, right: 40, left: 20, bottom: 40 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                      <XAxis 
+                        dataKey="sector" 
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                        angle={-15}
+                        textAnchor="end"
+                        height={60}
+                        interval={0}
+                      />
+                      <YAxis 
+                        type="number"
+                        domain={[0, 50]}
+                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                        label={{ 
+                          value: 'Percentage (%)', 
+                          angle: -90, 
+                          position: 'insideLeft',
+                          style: { fill: 'hsl(var(--muted-foreground))', fontSize: 12 }
+                        }}
+                      />
+                      <Tooltip 
+                        formatter={(value: number) => [`${value}%`, 'Attacks']}
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                        }}
+                        labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                      />
+                      <Bar 
+                        dataKey="percentage" 
+                        fill="hsl(var(--primary))" 
+                        radius={[8, 8, 0, 0]}
+                      >
+                        <LabelList 
+                          dataKey="percentage" 
+                          position="top"
+                          formatter={(value: number) => `${value}%`}
+                          style={{ fill: 'hsl(var(--foreground))', fontWeight: 600, fontSize: 12 }}
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
