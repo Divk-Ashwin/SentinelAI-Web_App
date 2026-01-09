@@ -56,7 +56,7 @@ export default function AuthPage() {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1500));
     
-    login({ email: loginForm.email, name: "User" });
+    await login(loginForm.email, loginForm.password);
     setIsLoading(false);
     
     toast({
@@ -87,7 +87,7 @@ export default function AuthPage() {
     setIsLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 1500));
     
-    register({ email: registerForm.email, name: registerForm.name });
+    await register(registerForm.name, registerForm.email, registerForm.password);
     setIsLoading(false);
     
     toast({
