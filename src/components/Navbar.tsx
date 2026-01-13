@@ -2,92 +2,85 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Shield, Menu } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Shield, Menu, Settings, HelpCircle, LogOut, User } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
 
-const navLinks = [
-  { label: "Home", href: "/#hero" },
-  { label: "Features", href: "/#features" },
-  { label: "How It Works", href: "/#how-it-works" },
-  { label: "Statistics", href: "/#statistics" },
-  { label: "About", href: "/about" },
-];
-
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("hero");
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, setRedirectPath } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
+
+  // Logged out navigation
+  const loggedOutLinks = [
+    { label: "Home", href: "/" },
+    { label: "About", href: "/about" },
+    { label: "Help", href: "/help" },
+    { label: "Try Demo", href: "/demo" },
+  ];
+
+  // Logged in navigation
+  const loggedInLinks = [
+    { label: "Home", href: "/" },
+    { label: "Analyze", href: "/analyze" },
+    { label: "History", href: "/history" },
+    { label: "About", href: "/about" },
+    { label: "Help", href: "/help" },
+  ];
+
+  const navLinks = isAuthenticated ? loggedInLinks : loggedOutLinks;
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
-      
-      // Track active section
-      if (location.pathname === "/") {
-        const sections = ["hero", "features", "how-it-works", "statistics", "languages"];
-        for (const section of sections.reverse()) {
-          const el = document.getElementById(section);
-          if (el && el.getBoundingClientRect().top <= 100) {
-            setActiveSection(section);
-            break;
-          }
-        }
-      }
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [location.pathname]);
+  }, []);
 
   const handleNavClick = (href: string) => {
     setIsOpen(false);
-    if (href.startsWith("/#")) {
-      const sectionId = href.replace("/#", "");
-      if (location.pathname !== "/") {
-        navigate("/");
-        setTimeout(() => {
-          document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
-        }, 100);
-      } else {
-        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
-      }
-    } else {
-      navigate(href);
-    }
+    navigate(href);
   };
 
-  const handleAnalyzeClick = () => {
-    if (isAuthenticated) {
-      navigate("/dashboard");
-    } else {
-      setRedirectPath("/dashboard");
-      toast({
-        title: "Please login first",
-        description: "You need to be logged in to analyze messages",
-        duration: 3000,
-      });
-      navigate("/auth");
-    }
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged out successfully",
+      duration: 3000,
+    });
+    navigate("/");
   };
 
   const isActive = (href: string) => {
-    if (href.startsWith("/#")) {
-      const sectionId = href.replace("/#", "");
-      return location.pathname === "/" && activeSection === sectionId;
-    }
     return location.pathname === href;
+  };
+
+  const getInitials = (name: string) => {
+    if (!name) return "U";
+    const parts = name.split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   };
 
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-[1000] w-full transition-all duration-300 ${
         isScrolled
-          ? "bg-background backdrop-blur-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] border-b border-border"
-          : "bg-background/95 backdrop-blur-sm"
+          ? "bg-background shadow-[0_2px_8px_rgba(0,0,0,0.1)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] border-b border-border"
+          : "bg-background"
       }`}
     >
       <div className="container mx-auto px-4">
@@ -100,7 +93,7 @@ export function Navbar() {
             <span className="text-xl font-bold text-foreground">SentinelAI</span>
           </Link>
 
-          {/* Desktop Navigation - hidden below lg (1024px) */}
+          {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => (
               <button
@@ -117,24 +110,50 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* Desktop CTA - hidden below lg */}
+          {/* Desktop Right Side */}
           <div className="hidden lg:flex items-center gap-3">
             <ThemeToggle />
-            <Link to="/auth">
-              <Button variant="outline" size="sm">
-                Login
-              </Button>
-            </Link>
-            <Button 
-              size="sm" 
-              className="bg-gradient-primary hover:opacity-90 transition-opacity"
-              onClick={handleAnalyzeClick}
-            >
-              Analyze Now
-            </Button>
+            
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-semibold text-sm border-2 border-primary hover:scale-105 hover:shadow-lg transition-all duration-200">
+                    {getInitials(user?.name || "")}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 mt-2">
+                  <DropdownMenuItem onClick={() => navigate("/settings")}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/help")}>
+                    <HelpCircle className="h-4 w-4 mr-2" />
+                    Help Center
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Link to="/auth">
+                  <Button variant="outline" size="sm">
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/auth?tab=register">
+                  <Button size="sm" className="bg-gradient-primary hover:opacity-90 transition-opacity">
+                    Sign Up
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
-          {/* Mobile/Tablet Menu - visible below lg */}
+          {/* Mobile Menu */}
           <div className="flex lg:hidden items-center gap-2">
             <ThemeToggle />
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -152,6 +171,19 @@ export function Navbar() {
                     </div>
                     <span className="text-xl font-bold">SentinelAI</span>
                   </div>
+                  
+                  {isAuthenticated && (
+                    <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-semibold text-sm">
+                        {getInitials(user?.name || "")}
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{user?.name}</p>
+                        <p className="text-xs text-muted-foreground">{user?.email}</p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex flex-col gap-2">
                     {navLinks.map((link) => (
                       <button
@@ -167,21 +199,41 @@ export function Navbar() {
                       </button>
                     ))}
                   </div>
+                  
                   <div className="flex flex-col gap-3 pt-4 border-t border-border">
-                    <Link to="/auth" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" className="w-full">
-                        Login
-                      </Button>
-                    </Link>
-                    <Button 
-                      className="w-full bg-gradient-primary"
-                      onClick={() => {
-                        setIsOpen(false);
-                        handleAnalyzeClick();
-                      }}
-                    >
-                      Analyze Now
-                    </Button>
+                    {isAuthenticated ? (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start"
+                          onClick={() => { setIsOpen(false); navigate("/settings"); }}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          Settings
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          className="w-full justify-start text-destructive hover:text-destructive"
+                          onClick={() => { setIsOpen(false); handleLogout(); }}
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Logout
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Link to="/auth" onClick={() => setIsOpen(false)}>
+                          <Button variant="outline" className="w-full">
+                            Login
+                          </Button>
+                        </Link>
+                        <Link to="/auth?tab=register" onClick={() => setIsOpen(false)}>
+                          <Button className="w-full bg-gradient-primary">
+                            Sign Up
+                          </Button>
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
               </SheetContent>

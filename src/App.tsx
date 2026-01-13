@@ -7,9 +7,12 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { AuthProvider } from "@/hooks/use-auth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
+import Analyze from "./pages/Analyze";
+import Demo from "./pages/Demo";
+import History from "./pages/History";
+import Settings from "./pages/Settings";
 import About from "./pages/About";
-import FAQ from "./pages/FAQ";
+import Help from "./pages/Help";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
@@ -29,13 +32,19 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/analyze" element={<Analyze />} />
+              <Route path="/demo" element={<Demo />} />
+              <Route path="/history" element={<History />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="/about" element={<About />} />
-              <Route path="/faq" element={<FAQ />} />
+              <Route path="/help" element={<Help />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/data-security" element={<DataSecurity />} />
+              {/* Legacy routes for backwards compatibility */}
+              <Route path="/dashboard" element={<Analyze />} />
+              <Route path="/faq" element={<Help />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
