@@ -2,10 +2,8 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeaturesSection } from "@/components/home/FeaturesSection";
-import { HowItWorksSection } from "@/components/home/HowItWorksSection";
-import { LanguageSupportSection } from "@/components/home/LanguageSupportSection";
 import { StatisticsSection } from "@/components/home/StatisticsSection";
-import { TestimonialsSection } from "@/components/home/TestimonialsSection";
+import { TrustSection } from "@/components/home/TrustSection";
 import { CTASection } from "@/components/home/CTASection";
 
 const Index = () => {
@@ -15,10 +13,8 @@ const Index = () => {
       <main className="overflow-x-hidden pt-16">
         <HeroSection />
         <FeaturesSection />
-        <HowItWorksSection />
-        <LanguageSupportSection />
         <StatisticsSection />
-        <TestimonialsSection />
+        <TrustSection />
         <CTASection />
       </main>
       <Footer />

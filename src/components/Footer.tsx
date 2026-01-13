@@ -1,59 +1,31 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Shield, Mail, Linkedin, Github } from "lucide-react";
 
 const footerLinks = {
   product: [
     { label: "Home", href: "/" },
-    { label: "Features", href: "/#features" },
-    { label: "How It Works", href: "/#how-it-works" },
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Analyze Messages", href: "/analyze" },
+    { label: "How It Works", href: "/about" },
   ],
   company: [
     { label: "About Us", href: "/about" },
     { label: "Contact", href: "/contact" },
-    { label: "FAQ", href: "/faq" },
+    { label: "Help Center", href: "/help" },
   ],
   legal: [
     { label: "Privacy Policy", href: "/privacy" },
-    { label: "Terms & Conditions", href: "/terms" },
+    { label: "Terms of Service", href: "/terms" },
     { label: "Data Security", href: "/data-security" },
   ],
 };
 
 export function Footer() {
-  const location = useLocation();
   const navigate = useNavigate();
 
   const handleNavClick = (href: string, e: React.MouseEvent) => {
     e.preventDefault();
-    
-    if (href === "/") {
-      // Scroll to top
-      if (location.pathname === "/") {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      } else {
-        navigate("/");
-        setTimeout(() => {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }, 100);
-      }
-    } else if (href.startsWith("/#")) {
-      const sectionId = href.replace("/#", "");
-      if (location.pathname !== "/") {
-        navigate("/");
-        setTimeout(() => {
-          document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
-        }, 100);
-      } else {
-        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
-      }
-    } else {
-      navigate(href);
-      // Scroll to top for internal pages
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }, 100);
-    }
+    navigate(href);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -72,13 +44,29 @@ export function Footer() {
               AI-powered SMS fraud detection protecting rural India from smishing attacks.
             </p>
             <div className="flex items-center gap-4">
-              <a href="https://google.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+              <a 
+                href="mailto:support@sentinelai.com" 
+                className="text-muted-foreground hover:text-primary transition-colors"
+                aria-label="Email"
+              >
                 <Mail className="h-5 w-5" />
               </a>
-              <a href="https://google.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+              <a 
+                href="https://linkedin.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-muted-foreground hover:text-primary transition-colors"
+                aria-label="LinkedIn"
+              >
                 <Linkedin className="h-5 w-5" />
               </a>
-              <a href="https://google.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+              <a 
+                href="https://github.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-muted-foreground hover:text-primary transition-colors"
+                aria-label="GitHub"
+              >
                 <Github className="h-5 w-5" />
               </a>
             </div>
@@ -141,10 +129,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © 2026 SentinelAI. All rights reserved.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Made with ❤️ for rural India
+            © 2026 SentinelAI. Built to protect rural India from SMS fraud.
           </p>
         </div>
       </div>
