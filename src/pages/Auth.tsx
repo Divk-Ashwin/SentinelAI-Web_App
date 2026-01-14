@@ -64,10 +64,9 @@ export default function AuthPage() {
       description: "Welcome back to SentinelAI",
     });
     
-    // Redirect to stored path or dashboard
-    const destination = redirectPath || "/dashboard";
+    // Always redirect to home page after login
     setRedirectPath(null);
-    navigate(destination);
+    navigate("/");
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -95,10 +94,9 @@ export default function AuthPage() {
       description: "Welcome to SentinelAI. Start analyzing messages now.",
     });
     
-    // Redirect to stored path or dashboard
-    const destination = redirectPath || "/dashboard";
+    // Always redirect to home page after registration
     setRedirectPath(null);
-    navigate(destination);
+    navigate("/");
   };
 
   const handleGoogleAuth = () => {
