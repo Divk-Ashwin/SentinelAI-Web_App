@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageCircle, Mail, MessageSquare, Copy, Lock, X } from "lucide-react";
+import { MessageCircle, Mail, MessageSquare, Copy, Lock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { AnalysisResult } from "@/pages/Dashboard";
 
@@ -21,26 +21,39 @@ export function ShareModal({ isOpen, onClose, result }: ShareModalProps) {
     return Math.random().toString(36).substring(2, 10);
   };
 
+  const getRiskEmoji = () => {
+    if (result.riskLevel === "high") return "🚨";
+    if (result.riskLevel === "medium") return "⚠️";
+    return "✅";
+  };
+
   const getShareContent = () => {
-    const riskEmoji = result.riskLevel === "high" ? "🚨" : result.riskLevel === "medium" ? "⚠️" : "✅";
+    const riskEmoji = getRiskEmoji();
     const shareId = generateShareId();
+    const baseUrl = "https://sentinelai.com";
     
     if (shareFormat === "quick") {
       return {
-        text: `${riskEmoji} SCAM ALERT from SentinelAI
+        text: `${riskEmoji} SCAM ALERT
 
-Risk Level: ${result.riskLevel.toUpperCase()} (${result.riskScore}/100)
-This SMS is likely a fraud attempt.
+Analyzed with SentinelAI:
+Risk Level: ${result.riskLevel.toUpperCase()}
 
-❌ Do NOT click links
-❌ Do NOT share personal info
+This message is likely ${result.riskLevel === "high" ? "a scam" : result.riskLevel === "medium" ? "suspicious" : "safe"}.
 
-Analyze your own messages FREE: sentinelai.com`,
-        link: `https://sentinelai.com/report/${shareId}`,
+DO NOT:
+❌ Click links
+❌ Share personal info
+❌ Send money
+
+Analyze your messages: ${baseUrl}`,
+        link: `${baseUrl}/report/${shareId}`,
+        subject: "Scam Alert - SentinelAI Analysis",
       };
     } else if (shareFormat === "full") {
+      const threats = result.threats.map(t => `• ${t.title}`).join('\n');
       return {
-        text: `${riskEmoji} DETAILED SCAM ANALYSIS from SentinelAI
+        text: `${riskEmoji} DETAILED SCAM ANALYSIS
 
 Risk Level: ${result.riskLevel.toUpperCase()} (${result.riskScore}/100)
 Confidence: ${result.confidence}%
@@ -48,16 +61,18 @@ Confidence: ${result.confidence}%
 Verdict: ${result.verdict}
 
 Threats Found:
-${result.threats.map(t => `• ${t.title}`).join('\n')}
+${threats || "• No specific threats identified"}
 
 Recommendation: ${result.action}
 
-View full analysis: https://sentinelai.com/report/${shareId}
+View full analysis: ${baseUrl}/report/${shareId}
 
-Protect yourself - analyze suspicious messages FREE at sentinelai.com`,
-        link: `https://sentinelai.com/report/${shareId}`,
+Protect yourself - analyze suspicious messages FREE at ${baseUrl}`,
+        link: `${baseUrl}/report/${shareId}`,
+        subject: "Detailed Scam Analysis - SentinelAI",
       };
     } else {
+      // Anonymous
       return {
         text: `${riskEmoji} SCAM WARNING
 
@@ -65,8 +80,9 @@ A suspicious SMS was detected with ${result.riskLevel.toUpperCase()} risk level.
 
 Stay safe - verify before clicking any links.
 
-Check your messages at: sentinelai.com`,
-        link: `https://sentinelai.com`,
+Check your messages at: ${baseUrl}`,
+        link: baseUrl,
+        subject: "Scam Warning - Stay Safe",
       };
     }
   };
@@ -74,30 +90,64 @@ Check your messages at: sentinelai.com`,
   const handleWhatsAppShare = () => {
     const { text } = getShareContent();
     const encodedText = encodeURIComponent(text);
-    window.open(`https://wa.me/?text=${encodedText}`, "_blank");
-    toast({ title: "Opening WhatsApp...", duration: 3000 });
+    window.open(`https://wa.me/?text=${encodedText}`, "_blank", "noopener,noreferrer");
+    toast({ 
+      title: "Opening WhatsApp...", 
+      description: "Share the warning with friends and family",
+      duration: 3000 
+    });
   };
 
   const handleEmailShare = () => {
-    const { text } = getShareContent();
-    const subject = encodeURIComponent("Scam Alert - Message Analysis from SentinelAI");
-    const body = encodeURIComponent(text);
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
-    toast({ title: "Opening email client...", duration: 3000 });
+    const { text, subject } = getShareContent();
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(text);
+    window.location.href = `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
+    toast({ 
+      title: "Opening email client...", 
+      duration: 3000 
+    });
   };
 
   const handleSMSShare = () => {
     const { text } = getShareContent();
     const encodedText = encodeURIComponent(text);
-    // SMS protocol
-    window.location.href = `sms:?body=${encodedText}`;
-    toast({ title: "Opening SMS...", duration: 3000 });
+    // Different SMS URI for different platforms
+    const smsUri = navigator.userAgent.includes("iPhone") 
+      ? `sms:&body=${encodedText}` 
+      : `sms:?body=${encodedText}`;
+    window.location.href = smsUri;
+    toast({ 
+      title: "Opening SMS...", 
+      duration: 3000 
+    });
   };
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     const { text, link } = getShareContent();
-    navigator.clipboard.writeText(`${text}\n\n${link}`);
-    toast({ title: "Link copied! ✓", description: "Valid for 7 days", duration: 3000 });
+    const fullContent = `${text}\n\n${link}`;
+    
+    try {
+      await navigator.clipboard.writeText(fullContent);
+      toast({ 
+        title: "Link copied! ✓", 
+        description: "Share link valid for 7 days",
+        duration: 3000 
+      });
+    } catch {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = fullContent;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      toast({ 
+        title: "Link copied! ✓", 
+        description: "Share link valid for 7 days",
+        duration: 3000 
+      });
+    }
   };
 
   const { text } = getShareContent();
@@ -106,37 +156,54 @@ Check your messages at: sentinelai.com`,
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-xl">
             🔗 Share This Analysis
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 pt-2">
           {/* Share Format */}
           <div>
-            <Label className="text-sm font-medium mb-3 block">Share Format</Label>
+            <Label className="text-sm font-medium mb-3 block">Choose Format</Label>
             <RadioGroup value={shareFormat} onValueChange={setShareFormat} className="space-y-2">
-              <div className="flex items-center space-x-3 p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors">
+              <label 
+                htmlFor="quick" 
+                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  shareFormat === "quick" ? "bg-primary/5 border-primary" : "bg-secondary/30 border-border hover:bg-secondary/50"
+                }`}
+              >
                 <RadioGroupItem value="quick" id="quick" />
-                <Label htmlFor="quick" className="cursor-pointer flex-1">
-                  <span className="font-medium">Quick Warning</span>
-                  <span className="text-sm text-muted-foreground block">Summary with key points</span>
-                </Label>
-              </div>
-              <div className="flex items-center space-x-3 p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors">
+                <div className="flex-1">
+                  <span className="font-medium text-foreground">Quick Warning</span>
+                  <span className="text-sm text-muted-foreground block">Summary with key points (recommended)</span>
+                </div>
+              </label>
+              
+              <label 
+                htmlFor="full" 
+                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  shareFormat === "full" ? "bg-primary/5 border-primary" : "bg-secondary/30 border-border hover:bg-secondary/50"
+                }`}
+              >
                 <RadioGroupItem value="full" id="full" />
-                <Label htmlFor="full" className="cursor-pointer flex-1">
-                  <span className="font-medium">Full Report</span>
+                <div className="flex-1">
+                  <span className="font-medium text-foreground">Full Report</span>
                   <span className="text-sm text-muted-foreground block">Complete detailed analysis</span>
-                </Label>
-              </div>
-              <div className="flex items-center space-x-3 p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors">
+                </div>
+              </label>
+              
+              <label 
+                htmlFor="anonymous" 
+                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  shareFormat === "anonymous" ? "bg-primary/5 border-primary" : "bg-secondary/30 border-border hover:bg-secondary/50"
+                }`}
+              >
                 <RadioGroupItem value="anonymous" id="anonymous" />
-                <Label htmlFor="anonymous" className="cursor-pointer flex-1">
-                  <span className="font-medium">Anonymous</span>
+                <div className="flex-1">
+                  <span className="font-medium text-foreground">Anonymous</span>
                   <span className="text-sm text-muted-foreground block">No personal info included</span>
-                </Label>
-              </div>
+                </div>
+              </label>
             </RadioGroup>
           </div>
 
@@ -146,31 +213,31 @@ Check your messages at: sentinelai.com`,
             <div className="grid grid-cols-2 gap-3">
               <Button 
                 variant="outline" 
-                className="flex items-center gap-2 h-12"
+                className="flex items-center justify-center gap-2 h-12 hover:bg-green-500/10 hover:border-green-500/50 hover:text-green-600 dark:hover:text-green-400"
                 onClick={handleWhatsAppShare}
               >
-                <MessageCircle className="h-5 w-5 text-green-500" />
+                <MessageCircle className="h-5 w-5" />
                 WhatsApp
               </Button>
               <Button 
                 variant="outline" 
-                className="flex items-center gap-2 h-12"
+                className="flex items-center justify-center gap-2 h-12 hover:bg-primary/10 hover:border-primary/50"
                 onClick={handleEmailShare}
               >
-                <Mail className="h-5 w-5 text-primary" />
+                <Mail className="h-5 w-5" />
                 Email
               </Button>
               <Button 
                 variant="outline" 
-                className="flex items-center gap-2 h-12"
+                className="flex items-center justify-center gap-2 h-12 hover:bg-blue-500/10 hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400"
                 onClick={handleSMSShare}
               >
-                <MessageSquare className="h-5 w-5 text-blue-500" />
+                <MessageSquare className="h-5 w-5" />
                 SMS
               </Button>
               <Button 
                 variant="outline" 
-                className="flex items-center gap-2 h-12"
+                className="flex items-center justify-center gap-2 h-12 hover:bg-secondary"
                 onClick={handleCopyLink}
               >
                 <Copy className="h-5 w-5" />
@@ -182,9 +249,9 @@ Check your messages at: sentinelai.com`,
           {/* Preview */}
           <div>
             <Label className="text-sm font-medium mb-3 block">Preview</Label>
-            <Card className="bg-secondary/30 border-border">
+            <Card className="bg-secondary/20 border-border">
               <CardContent className="p-4">
-                <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-sans">
+                <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-sans leading-relaxed">
                   {text}
                 </pre>
               </CardContent>
@@ -192,9 +259,11 @@ Check your messages at: sentinelai.com`,
           </div>
 
           {/* Privacy Notice */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Lock className="h-4 w-4" />
-            Your personal details will not be shared
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-success/5 border border-success/20">
+            <Lock className="h-4 w-4 text-success flex-shrink-0" />
+            <span className="text-sm text-muted-foreground">
+              Your personal details will not be shared. Only the message analysis is included.
+            </span>
           </div>
         </div>
       </DialogContent>
