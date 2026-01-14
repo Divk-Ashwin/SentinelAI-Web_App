@@ -87,11 +87,14 @@ export function StatisticsSection() {
                   <Tooltip
                     formatter={(value: number) => [`${value}%`, 'Percentage']}
                     contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
+                      backgroundColor: 'hsl(var(--popover))',
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px',
+                      boxShadow: '0 2px 8px hsl(var(--foreground) / 0.08)',
                     }}
-                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
+                    itemStyle={{ color: 'hsl(var(--muted-foreground))' }}
+                    cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
                   />
                   <Bar
                     dataKey="percentage"
