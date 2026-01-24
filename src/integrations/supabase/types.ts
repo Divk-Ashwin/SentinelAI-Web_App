@@ -14,7 +14,129 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      analyses: {
+        Row: {
+          content_analysis: Json | null
+          created_at: string
+          date_received: string
+          id: string
+          language: Database["public"]["Enums"]["analysis_language"] | null
+          message_content: string
+          recommendations: Json | null
+          risk_level: Database["public"]["Enums"]["risk_level"] | null
+          risk_score: number | null
+          screenshot_url: string | null
+          sender_analysis: Json | null
+          sender_phone: string
+          threats: Json | null
+          time_received: string
+          updated_at: string
+          user_id: string
+          verdict: string | null
+        }
+        Insert: {
+          content_analysis?: Json | null
+          created_at?: string
+          date_received: string
+          id?: string
+          language?: Database["public"]["Enums"]["analysis_language"] | null
+          message_content: string
+          recommendations?: Json | null
+          risk_level?: Database["public"]["Enums"]["risk_level"] | null
+          risk_score?: number | null
+          screenshot_url?: string | null
+          sender_analysis?: Json | null
+          sender_phone: string
+          threats?: Json | null
+          time_received: string
+          updated_at?: string
+          user_id: string
+          verdict?: string | null
+        }
+        Update: {
+          content_analysis?: Json | null
+          created_at?: string
+          date_received?: string
+          id?: string
+          language?: Database["public"]["Enums"]["analysis_language"] | null
+          message_content?: string
+          recommendations?: Json | null
+          risk_level?: Database["public"]["Enums"]["risk_level"] | null
+          risk_score?: number | null
+          screenshot_url?: string | null
+          sender_analysis?: Json | null
+          sender_phone?: string
+          threats?: Json | null
+          time_received?: string
+          updated_at?: string
+          user_id?: string
+          verdict?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          auto_delete_history: boolean | null
+          created_at: string
+          default_language:
+            | Database["public"]["Enums"]["analysis_language"]
+            | null
+          email_notifications: boolean | null
+          theme: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_delete_history?: boolean | null
+          created_at?: string
+          default_language?:
+            | Database["public"]["Enums"]["analysis_language"]
+            | null
+          email_notifications?: boolean | null
+          theme?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_delete_history?: boolean | null
+          created_at?: string
+          default_language?:
+            | Database["public"]["Enums"]["analysis_language"]
+            | null
+          email_notifications?: boolean | null
+          theme?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +145,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      analysis_language: "english" | "hindi" | "telugu"
+      risk_level: "LOW" | "MEDIUM" | "HIGH"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +273,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      analysis_language: ["english", "hindi", "telugu"],
+      risk_level: ["LOW", "MEDIUM", "HIGH"],
+    },
   },
 } as const

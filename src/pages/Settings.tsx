@@ -7,21 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useAuth } from "@/hooks/use-auth";
-import { Settings as SettingsIcon, User, Globe, Trash2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { User, Globe, Trash2, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const [language, setLanguage] = useState(localStorage.getItem('analysisLanguage') || 'english');
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !user) {
       toast({ title: "Please login first", variant: "destructive" });
       navigate("/auth");
     }
-  }, [isAuthenticated, navigate]);
+  }, [authLoading, user, navigate]);
 
   const handleLanguageChange = (value: string) => {
     setLanguage(value);
@@ -29,7 +29,27 @@ export default function Settings() {
     toast({ title: "Language preference saved" });
   };
 
-  if (!isAuthenticated) return null;
+  const handleDeleteAccount = async () => {
+    // In a real app, this would call an API to delete the user's account
+    toast({
+      title: "Account Deletion",
+      description: "Please contact support to delete your account.",
+    });
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  const getUserDisplayName = () => {
+    return user.user_metadata?.full_name || user.email?.split("@")[0] || "User";
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -50,11 +70,11 @@ export default function Settings() {
               <CardContent className="space-y-4">
                 <div>
                   <Label className="text-muted-foreground">Name</Label>
-                  <p className="text-foreground font-medium">{user?.name || 'User'}</p>
+                  <p className="text-foreground font-medium">{getUserDisplayName()}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Email</Label>
-                  <p className="text-foreground font-medium">{user?.email || 'user@example.com'}</p>
+                  <p className="text-foreground font-medium">{user.email}</p>
                 </div>
               </CardContent>
             </Card>
@@ -103,7 +123,9 @@ export default function Settings() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Button variant="destructive" size="sm">Delete My Account</Button>
+                <Button variant="destructive" size="sm" onClick={handleDeleteAccount}>
+                  Delete My Account
+                </Button>
                 <p className="text-xs text-muted-foreground mt-2">This action cannot be undone.</p>
               </CardContent>
             </Card>
