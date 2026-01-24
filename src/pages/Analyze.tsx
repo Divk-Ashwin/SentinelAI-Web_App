@@ -1,53 +1,27 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Search, Upload, Calendar, Clock, Phone, MessageSquare, Languages, Loader2, X, Image, CheckCircle } from "lucide-react";
+import { Search, Upload, Calendar, Clock, Phone, MessageSquare, Languages, Loader2, X, Image, CheckCircle, AlertCircle } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { toast } from "@/hooks/use-toast";
 import { AnalysisReport } from "@/components/dashboard/AnalysisReport";
 import { AIChatbot } from "@/components/dashboard/AIChatbot";
-import { useAuth } from "@/hooks/use-auth";
-
-export interface AnalysisResult {
-  riskScore: number;
-  riskLevel: "low" | "medium" | "high";
-  confidence: number;
-  verdict: string;
-  action: string;
-  threats: {
-    title: string;
-    description: string;
-    severity: "high" | "medium" | "low";
-  }[];
-  senderAnalysis: {
-    phone: string;
-    inContacts: boolean;
-    reportCount: number;
-    isNew: boolean;
-  };
-  contentAnalysis: {
-    hasLinks: boolean;
-    linkDomain?: string;
-    hasUrgency: boolean;
-    grammarScore: number;
-    keywords: string[];
-  };
-  recommendations: {
-    do: string[];
-    dont: string[];
-  };
-}
+import { useAuth } from "@/contexts/AuthContext";
+import { saveAnalysis } from "@/services/analysisService";
+import { uploadScreenshot } from "@/services/storageService";
+import type { AnalysisResult, AnalysisData, RiskLevel, Language } from "@/types";
 
 export default function Analyze() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [loadingMessage, setLoadingMessage] = useState("");
   const resultRef = useRef<HTMLDivElement>(null);
@@ -63,7 +37,7 @@ export default function Analyze() {
   const [phoneError, setPhoneError] = useState("");
   
   const [formData, setFormData] = useState({
-    language: localStorage.getItem('analysisLanguage') || "english",
+    language: (localStorage.getItem('analysisLanguage') || "english") as Language,
     phone: "",
     message: "",
     date: new Date().toISOString().split("T")[0],
@@ -72,7 +46,7 @@ export default function Analyze() {
 
   // Auth protection - redirect if not authenticated
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !user) {
       toast({
         title: "Please login first",
         description: "You need to be logged in to analyze messages",
@@ -80,7 +54,7 @@ export default function Analyze() {
       });
       navigate("/auth");
     }
-  }, [isAuthenticated, navigate]);
+  }, [authLoading, user, navigate]);
 
   // Save language preference
   useEffect(() => {
@@ -223,6 +197,22 @@ export default function Analyze() {
     setIsAnalyzing(true);
     setAnalysisResult(null);
 
+    // Upload screenshot if present
+    let screenshotUrl: string | undefined;
+    if (uploadedFile && user) {
+      setIsUploading(true);
+      const uploadResult = await uploadScreenshot(uploadedFile, user.id);
+      setIsUploading(false);
+      
+      if (uploadResult.success && uploadResult.url) {
+        screenshotUrl = uploadResult.url;
+        console.log("Screenshot uploaded:", screenshotUrl);
+      } else {
+        console.error("Screenshot upload failed:", uploadResult.error);
+        // Continue without screenshot
+      }
+    }
+
     for (let i = 0; i < loadingMessages.length; i++) {
       setLoadingMessage(loadingMessages[i]);
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -301,6 +291,34 @@ export default function Analyze() {
     setIsAnalyzing(false);
     setLoadingMessage("");
 
+    // Save analysis to database if user is logged in
+    if (user) {
+      const analysisData: AnalysisData = {
+        senderPhone: formData.phone,
+        messageContent: formData.message,
+        dateReceived: formData.date,
+        timeReceived: formData.time,
+        screenshotUrl,
+        language: formData.language,
+        riskScore: result.riskScore,
+        riskLevel: result.riskLevel.toUpperCase() as RiskLevel,
+        verdict: result.verdict,
+        threats: result.threats,
+        recommendations: result.recommendations,
+        senderAnalysis: result.senderAnalysis,
+        contentAnalysis: result.contentAnalysis,
+      };
+
+      const saveResult = await saveAnalysis(analysisData);
+      
+      if (saveResult.success) {
+        console.log("Analysis saved to database:", saveResult.data?.id);
+      } else {
+        console.error("Failed to save analysis:", saveResult.error);
+        // Don't show error to user - analysis still worked
+      }
+    }
+
     toast({
       title: "Analysis Complete",
       description: `Risk Level: ${riskLevel.toUpperCase()} (${riskScore}/100)`,
@@ -316,7 +334,15 @@ export default function Analyze() {
     }, 200);
   };
 
-  if (!isAuthenticated) {
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
     return null;
   }
 
@@ -343,7 +369,7 @@ export default function Analyze() {
                   </Label>
                   <Select
                     value={formData.language}
-                    onValueChange={(value) => setFormData({ ...formData, language: value })}
+                    onValueChange={(value) => setFormData({ ...formData, language: value as Language })}
                   >
                     <SelectTrigger className="w-full md:w-[200px]">
                       <SelectValue />
@@ -508,12 +534,12 @@ export default function Analyze() {
                   size="lg"
                   className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
                   onClick={analyzeMessage}
-                  disabled={isAnalyzing || !formData.phone || !formData.message}
+                  disabled={isAnalyzing || isUploading || !formData.phone || !formData.message}
                 >
-                  {isAnalyzing ? (
+                  {isAnalyzing || isUploading ? (
                     <>
                       <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                      {loadingMessage}
+                      {isUploading ? "Uploading screenshot..." : loadingMessage}
                     </>
                   ) : (
                     <>
@@ -541,3 +567,6 @@ export default function Analyze() {
     </div>
   );
 }
+
+// Re-export AnalysisResult type for other components
+export type { AnalysisResult };

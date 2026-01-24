@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { Shield, Eye, EyeOff, Mail, Lock, User, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -27,8 +27,9 @@ const registerSchema = z.object({
 
 export default function AuthPage() {
   const navigate = useNavigate();
-  const { login, register, redirectPath, setRedirectPath } = useAuth();
-  const [activeTab, setActiveTab] = useState("login");
+  const [searchParams] = useSearchParams();
+  const { user, signIn, signUp, signInWithGoogle, loading: authLoading } = useAuth();
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") === "register" ? "register" : "login");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +38,13 @@ export default function AuthPage() {
   const [registerForm, setRegisterForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [loginErrors, setLoginErrors] = useState<Record<string, string>>({});
   const [registerErrors, setRegisterErrors] = useState<Record<string, string>>({});
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,19 +61,40 @@ export default function AuthPage() {
     }
 
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
     
-    await login(loginForm.email, loginForm.password);
+    const { error } = await signIn(loginForm.email, loginForm.password);
+    
     setIsLoading(false);
+    
+    if (error) {
+      // Handle specific error messages
+      if (error.message.includes("Invalid login credentials")) {
+        toast({
+          title: "Login Failed",
+          description: "Invalid email or password. Please try again.",
+          variant: "destructive",
+        });
+      } else if (error.message.includes("Email not confirmed")) {
+        toast({
+          title: "Email Not Verified",
+          description: "Please check your email and verify your account.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Login Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+      return;
+    }
     
     toast({
       title: "Login successful! 🎉",
       description: "Welcome back to SentinelAI",
     });
     
-    // Always redirect to home page after login
-    setRedirectPath(null);
     navigate("/");
   };
 
@@ -84,27 +113,60 @@ export default function AuthPage() {
     }
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
     
-    await register(registerForm.name, registerForm.email, registerForm.password);
+    const { error } = await signUp(registerForm.email, registerForm.password, registerForm.name);
+    
     setIsLoading(false);
+    
+    if (error) {
+      // Handle specific error messages
+      if (error.message.includes("User already registered")) {
+        toast({
+          title: "Account Exists",
+          description: "An account with this email already exists. Please login instead.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Registration Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+      return;
+    }
     
     toast({
       title: "Account created! 🎉",
       description: "Welcome to SentinelAI. Start analyzing messages now.",
     });
     
-    // Always redirect to home page after registration
-    setRedirectPath(null);
     navigate("/");
   };
 
-  const handleGoogleAuth = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Google authentication will be available soon.",
-    });
+  const handleGoogleAuth = async () => {
+    setIsLoading(true);
+    const { error } = await signInWithGoogle();
+    setIsLoading(false);
+    
+    if (error) {
+      toast({
+        title: "Google Sign In Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+    // OAuth will redirect, so no need to navigate
   };
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -146,6 +208,7 @@ export default function AuthPage() {
                         className="pl-10"
                         value={loginForm.email}
                         onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                        disabled={isLoading}
                       />
                     </div>
                     {loginErrors.email && (
@@ -169,6 +232,7 @@ export default function AuthPage() {
                         className="pl-10 pr-10"
                         value={loginForm.password}
                         onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                        disabled={isLoading}
                       />
                       <button
                         type="button"
@@ -184,7 +248,14 @@ export default function AuthPage() {
                   </div>
 
                   <Button type="submit" className="w-full bg-gradient-primary" disabled={isLoading}>
-                    {isLoading ? "Signing in..." : "Login"}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      "Login"
+                    )}
                   </Button>
 
                   <div className="relative my-6">
@@ -201,6 +272,7 @@ export default function AuthPage() {
                     variant="outline"
                     className="w-full"
                     onClick={handleGoogleAuth}
+                    disabled={isLoading}
                   >
                     <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                       <path
@@ -249,6 +321,7 @@ export default function AuthPage() {
                         className="pl-10"
                         value={registerForm.name}
                         onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
+                        disabled={isLoading}
                       />
                     </div>
                     {registerErrors.name && (
@@ -267,6 +340,7 @@ export default function AuthPage() {
                         className="pl-10"
                         value={registerForm.email}
                         onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+                        disabled={isLoading}
                       />
                     </div>
                     {registerErrors.email && (
@@ -285,6 +359,7 @@ export default function AuthPage() {
                         className="pl-10 pr-10"
                         value={registerForm.password}
                         onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+                        disabled={isLoading}
                       />
                       <button
                         type="button"
@@ -310,6 +385,7 @@ export default function AuthPage() {
                         className="pl-10 pr-10"
                         value={registerForm.confirmPassword}
                         onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
+                        disabled={isLoading}
                       />
                       <button
                         type="button"
@@ -325,7 +401,14 @@ export default function AuthPage() {
                   </div>
 
                   <Button type="submit" className="w-full bg-gradient-primary" disabled={isLoading}>
-                    {isLoading ? "Creating account..." : "Create Account"}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Creating account...
+                      </>
+                    ) : (
+                      "Create Account"
+                    )}
                   </Button>
 
                   <div className="relative my-6">
@@ -342,6 +425,7 @@ export default function AuthPage() {
                     variant="outline"
                     className="w-full"
                     onClick={handleGoogleAuth}
+                    disabled={isLoading}
                   >
                     <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                       <path

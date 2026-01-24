@@ -4,7 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/use-theme";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Analyze from "./pages/Analyze";
@@ -30,21 +31,43 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/analyze" element={<Analyze />} />
               <Route path="/demo" element={<Demo />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/settings" element={<Settings />} />
               <Route path="/about" element={<About />} />
               <Route path="/help" element={<Help />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/data-security" element={<DataSecurity />} />
+              
+              {/* Protected routes */}
+              <Route path="/analyze" element={
+                <ProtectedRoute>
+                  <Analyze />
+                </ProtectedRoute>
+              } />
+              <Route path="/history" element={
+                <ProtectedRoute>
+                  <History />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } />
+              
               {/* Legacy routes for backwards compatibility */}
-              <Route path="/dashboard" element={<Analyze />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Analyze />
+                </ProtectedRoute>
+              } />
               <Route path="/faq" element={<Help />} />
+              
+              {/* 404 */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

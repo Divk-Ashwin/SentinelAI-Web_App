@@ -9,9 +9,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Shield, Menu, Settings, HelpCircle, LogOut, User } from "lucide-react";
+import { Shield, Menu, Settings, HelpCircle, LogOut } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
 export function Navbar() {
@@ -19,7 +19,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { user, signOut } = useAuth();
 
   // Logged out navigation
   const loggedOutLinks = [
@@ -38,7 +38,7 @@ export function Navbar() {
     { label: "Help", href: "/help" },
   ];
 
-  const navLinks = isAuthenticated ? loggedInLinks : loggedOutLinks;
+  const navLinks = user ? loggedInLinks : loggedOutLinks;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,8 +53,18 @@ export function Navbar() {
     navigate(href);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    const { error } = await signOut();
+    
+    if (error) {
+      toast({
+        title: "Logout failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     toast({
       title: "Logged out successfully",
       duration: 3000,
@@ -66,13 +76,22 @@ export function Navbar() {
     return location.pathname === href;
   };
 
-  const getInitials = (name: string) => {
-    if (!name) return "U";
-    const parts = name.split(" ");
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
+  const getInitials = (name?: string | null, email?: string | null) => {
+    if (name) {
+      const parts = name.split(" ");
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+      return name.slice(0, 2).toUpperCase();
     }
-    return name.slice(0, 2).toUpperCase();
+    if (email) {
+      return email.slice(0, 2).toUpperCase();
+    }
+    return "U";
+  };
+
+  const getUserDisplayName = () => {
+    return user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
   };
 
   return (
@@ -114,14 +133,19 @@ export function Navbar() {
           <div className="hidden lg:flex items-center gap-3">
             <ThemeToggle />
             
-            {isAuthenticated ? (
+            {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-semibold text-sm border-2 border-primary hover:scale-105 hover:shadow-lg transition-all duration-200">
-                    {getInitials(user?.name || "")}
+                    {getInitials(user.user_metadata?.full_name, user.email)}
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 mt-2">
+                  <div className="px-2 py-1.5 text-sm">
+                    <p className="font-medium">{getUserDisplayName()}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate("/settings")}>
                     <Settings className="h-4 w-4 mr-2" />
                     Settings
@@ -172,14 +196,14 @@ export function Navbar() {
                     <span className="text-xl font-bold">SentinelAI</span>
                   </div>
                   
-                  {isAuthenticated && (
+                  {user && (
                     <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-semibold text-sm">
-                        {getInitials(user?.name || "")}
+                        {getInitials(user.user_metadata?.full_name, user.email)}
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">{user?.name}</p>
-                        <p className="text-xs text-muted-foreground">{user?.email}</p>
+                        <p className="font-medium text-foreground">{getUserDisplayName()}</p>
+                        <p className="text-xs text-muted-foreground truncate max-w-[180px]">{user.email}</p>
                       </div>
                     </div>
                   )}
@@ -201,7 +225,7 @@ export function Navbar() {
                   </div>
                   
                   <div className="flex flex-col gap-3 pt-4 border-t border-border">
-                    {isAuthenticated ? (
+                    {user ? (
                       <>
                         <Button 
                           variant="outline" 
