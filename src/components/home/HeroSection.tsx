@@ -2,11 +2,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Shield, ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-illustration.png";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function HeroSection() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
 
   const handleAnalyzeClick = () => {
     if (isAuthenticated) {
