@@ -13,7 +13,7 @@ import { toast } from "@/hooks/use-toast";
 import { AnalysisReport } from "@/components/dashboard/AnalysisReport";
 import { AnalysisHistory } from "@/components/dashboard/AnalysisHistory";
 import { AIChatbot } from "@/components/dashboard/AIChatbot";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface AnalysisResult {
   riskScore: number;
@@ -47,7 +47,8 @@ export interface AnalysisResult {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { isAuthenticated, logout } = useAuth();
+  const { user, signOut } = useAuth();
+  const isAuthenticated = !!user;
   const [activeTab, setActiveTab] = useState("analyze");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -335,8 +336,8 @@ export default function Dashboard() {
     }, 200);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate("/");
   };
 
