@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Eye, EyeOff, Mail, Lock, User, Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Shield, Eye, EyeOff, Mail, Lock, User, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
@@ -33,7 +34,8 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [loginErrors, setLoginErrors] = useState<Record<string, string>>({});
@@ -114,7 +116,7 @@ export default function AuthPage() {
 
     setIsLoading(true);
     
-    const { error } = await signUp(registerForm.email, registerForm.password, registerForm.name);
+    const { error, needsEmailConfirmation } = await signUp(registerForm.email, registerForm.password, registerForm.name);
     
     setIsLoading(false);
     
@@ -133,6 +135,14 @@ export default function AuthPage() {
           variant: "destructive",
         });
       }
+      return;
+    }
+    
+    // Check if email confirmation is needed
+    if (needsEmailConfirmation) {
+      setRegisteredEmail(registerForm.email);
+      setShowEmailConfirmation(true);
+      setRegisterForm({ name: "", email: "", password: "", confirmPassword: "" });
       return;
     }
     
@@ -182,6 +192,47 @@ export default function AuthPage() {
         </Link>
 
         <Card className="bg-card border-border shadow-xl">
+          {showEmailConfirmation ? (
+            <CardContent className="pt-6 pb-8">
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <CheckCircle className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">Check your email</CardTitle>
+                <CardDescription className="text-base">
+                  We've sent a confirmation link to<br />
+                  <span className="font-medium text-foreground">{registeredEmail}</span>
+                </CardDescription>
+                <Alert className="text-left mt-6">
+                  <Mail className="h-4 w-4" />
+                  <AlertTitle>Didn't receive the email?</AlertTitle>
+                  <AlertDescription>
+                    Check your spam folder, or{" "}
+                    <button 
+                      onClick={() => {
+                        setShowEmailConfirmation(false);
+                        setActiveTab("register");
+                      }}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      try again
+                    </button>
+                  </AlertDescription>
+                </Alert>
+                <Button 
+                  variant="outline" 
+                  className="mt-4" 
+                  onClick={() => {
+                    setShowEmailConfirmation(false);
+                    setActiveTab("login");
+                  }}
+                >
+                  Back to Login
+                </Button>
+              </div>
+            </CardContent>
+          ) : (
+            <>
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl">Welcome</CardTitle>
             <CardDescription>
@@ -462,6 +513,8 @@ export default function AuthPage() {
               </TabsContent>
             </Tabs>
           </CardContent>
+            </>
+          )}
         </Card>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
