@@ -1,14 +1,15 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, Session, AuthError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: AuthError | null; needsEmailConfirmation?: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signInWithGoogle: () => Promise<{ error: AuthError | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<{ error: AuthError | null }>;
 }
 
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -58,12 +59,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (error) {
         console.error("Sign up error:", error.message);
+        return { error, needsEmailConfirmation: false };
       }
       
-      return { error };
+      // Check if email confirmation is required
+      const needsEmailConfirmation = !data.session && data.user?.identities?.length === 0 || 
+        (data.user && !data.session);
+      
+      return { error: null, needsEmailConfirmation };
     } catch (err) {
       console.error("Unexpected sign up error:", err);
-      return { error: err as AuthError };
+      return { error: err as AuthError, needsEmailConfirmation: false };
     }
   };
 
@@ -87,21 +93,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: window.location.origin,
       });
       
-      if (error) {
-        console.error("Google sign in error:", error.message);
+      if (result.error) {
+        console.error("Google sign in error:", result.error.message);
+        return { error: result.error };
       }
       
-      return { error };
+      return { error: null };
     } catch (err) {
       console.error("Unexpected Google sign in error:", err);
-      return { error: err as AuthError };
+      return { error: err instanceof Error ? err : new Error(String(err)) };
     }
   };
 
