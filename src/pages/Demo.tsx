@@ -325,7 +325,7 @@ export default function Demo() {
               <div ref={resultRef} className="mt-8 animate-fade-in-up">
                 <AnalysisReport result={analysisResult} language={formData.language} />
                 <div className="mt-8">
-                  <AIChatbot result={analysisResult} language={formData.language} />
+                  <AIChatbot result={analysisResult} language={formData.language} messageContent={formData.message} />
                 </div>
                 
                 {/* CTA */}
