@@ -15,6 +15,7 @@ import { AIChatbot } from "@/components/dashboard/AIChatbot";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveAnalysis } from "@/services/analysisService";
 import { uploadScreenshot } from "@/services/storageService";
+import { analyzeSMSMessage } from "@/services/aiService";
 import type { AnalysisResult, AnalysisData, RiskLevel, Language } from "@/types";
 
 export default function Analyze() {
@@ -213,79 +214,36 @@ export default function Analyze() {
       }
     }
 
-    for (let i = 0; i < loadingMessages.length; i++) {
-      setLoadingMessage(loadingMessages[i]);
-      await new Promise((resolve) => setTimeout(resolve, 800));
-    }
+    // Show loading messages while analyzing
+    const loadingInterval = setInterval(() => {
+      const idx = Math.floor(Math.random() * loadingMessages.length);
+      setLoadingMessage(loadingMessages[idx]);
+    }, 1500);
 
-    // Mock analysis
-    const message = formData.message.toLowerCase();
-    const hasUrl = message.includes("http") || message.includes("bit.ly") || message.includes("link");
-    const hasUrgency = message.includes("urgent") || message.includes("immediate") || message.includes("expire") || message.includes("block");
-    const hasOTP = message.includes("otp") || message.includes("pin") || message.includes("password");
-    const hasMoney = message.includes("₹") || message.includes("lakhs") || message.includes("prize") || message.includes("won");
+    let result: AnalysisResult;
     
-    let riskScore = 20;
-    if (hasUrl) riskScore += 25;
-    if (hasUrgency) riskScore += 20;
-    if (hasOTP) riskScore += 25;
-    if (hasMoney) riskScore += 15;
-    riskScore = Math.min(riskScore, 100);
-
-    const riskLevel: "low" | "medium" | "high" = riskScore < 35 ? "low" : riskScore < 65 ? "medium" : "high";
-
-    const result: AnalysisResult = {
-      riskScore,
-      riskLevel,
-      confidence: 85 + Math.floor(Math.random() * 10),
-      verdict: riskLevel === "high" 
-        ? "This message is likely a smishing attempt" 
-        : riskLevel === "medium"
-        ? "This message shows some suspicious characteristics"
-        : "This message appears to be legitimate",
-      action: riskLevel === "high"
-        ? "Do NOT click links or share personal information"
-        : riskLevel === "medium"
-        ? "Verify the sender through official channels before responding"
-        : "Safe to proceed, but always stay vigilant",
-      threats: [
-        ...(hasUrl ? [{ title: "Suspicious Link Detected", description: "Contains shortened or suspicious URL", severity: "high" as const }] : []),
-        ...(hasUrgency ? [{ title: "Urgency Tactics", description: "Creates artificial time pressure", severity: "high" as const }] : []),
-        ...(hasOTP ? [{ title: "Requests Sensitive Info", description: "Asks for OTP/PIN/password", severity: "high" as const }] : []),
-      ],
-      senderAnalysis: {
-        phone: formData.phone,
-        inContacts: false,
-        reportCount: riskScore > 50 ? Math.floor(Math.random() * 50) + 10 : 0,
-        isNew: riskScore > 60,
-      },
-      contentAnalysis: {
-        hasLinks: hasUrl,
-        linkDomain: hasUrl ? "suspicious-domain.xyz" : undefined,
-        hasUrgency,
-        grammarScore: 6 + Math.floor(Math.random() * 4),
-        keywords: [
-          ...(hasUrl ? ["link", "click"] : []),
-          ...(hasUrgency ? ["urgent", "immediate"] : []),
-          ...(hasOTP ? ["OTP", "password"] : []),
-          ...(hasMoney ? ["prize", "won"] : []),
-        ],
-      },
-      recommendations: {
-        do: [
-          "Delete this message immediately",
-          "Block the sender number",
-          "Tell 3 friends about this scam",
-          "Check your bank account for unauthorized activity",
-        ],
-        dont: [
-          "Don't click any links",
-          "Don't share OTP, password, or PIN",
-          "Don't call the number back",
-          "Don't respond to the sender",
-        ],
-      },
-    };
+    try {
+      // Call the real AI analysis
+      result = await analyzeSMSMessage(
+        formData.message,
+        formData.phone,
+        formData.language
+      );
+    } catch (error) {
+      console.error("AI analysis failed:", error);
+      clearInterval(loadingInterval);
+      setIsAnalyzing(false);
+      setLoadingMessage("");
+      
+      toast({
+        title: "Analysis Failed",
+        description: error instanceof Error ? error.message : "Unable to analyze message. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    clearInterval(loadingInterval);
 
     setAnalysisResult(result);
     setIsAnalyzing(false);
@@ -321,7 +279,7 @@ export default function Analyze() {
 
     toast({
       title: "Analysis Complete",
-      description: `Risk Level: ${riskLevel.toUpperCase()} (${riskScore}/100)`,
+      description: `Risk Level: ${result.riskLevel.toUpperCase()} (${result.riskScore}/100)`,
     });
 
     setTimeout(() => {
@@ -556,7 +514,7 @@ export default function Analyze() {
               <div ref={resultRef} className="mt-8 animate-fade-in-up">
                 <AnalysisReport result={analysisResult} language={formData.language} />
                 <div className="mt-8">
-                  <AIChatbot result={analysisResult} language={formData.language} />
+                  <AIChatbot result={analysisResult} language={formData.language} messageContent={formData.message} />
                 </div>
               </div>
             )}
