@@ -1,7 +1,7 @@
+import { supabase } from "@/integrations/supabase/client";
 import type { AnalysisResult, Language } from "@/types";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 interface AnalyzeSMSResponse {
   riskScore: number;
@@ -39,18 +39,34 @@ interface ChatMessage {
 }
 
 /**
+ * Get the current user's JWT token for authenticated API calls
+ */
+async function getAuthToken(): Promise<string> {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  
+  if (error || !session) {
+    throw new Error("You must be logged in to use this feature");
+  }
+  
+  return session.access_token;
+}
+
+/**
  * Analyze an SMS message for scam indicators using AI
+ * Requires authenticated user
  */
 export async function analyzeSMSMessage(
   messageContent: string,
   senderPhone: string,
   language: Language
 ): Promise<AnalysisResult> {
+  const token = await getAuthToken();
+
   const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-sms`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${SUPABASE_KEY}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
       messageContent,
@@ -81,6 +97,7 @@ export async function analyzeSMSMessage(
 
 /**
  * Chat with AI assistant about the analysis
+ * Requires authenticated user
  */
 export async function chatWithAssistant(
   userQuestion: string,
@@ -94,11 +111,13 @@ export async function chatWithAssistant(
   language: Language,
   chatHistory: ChatMessage[] = []
 ): Promise<string> {
+  const token = await getAuthToken();
+
   const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-assistant`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${SUPABASE_KEY}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
       userQuestion,

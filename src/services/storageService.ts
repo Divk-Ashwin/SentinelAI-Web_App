@@ -24,6 +24,7 @@ function validateFile(file: File): { valid: boolean; error?: string } {
 }
 
 // Upload screenshot to storage
+// Returns a signed URL since the bucket is private for security
 export async function uploadScreenshot(file: File, userId: string): Promise<StorageResult> {
   try {
     // Validate the file
@@ -52,16 +53,22 @@ export async function uploadScreenshot(file: File, userId: string): Promise<Stor
       return { success: false, error: uploadError.message };
     }
 
-    // Get the public URL
-    const { data: { publicUrl } } = supabase.storage
+    // Get a signed URL (1 hour expiry) since bucket is private
+    // This is more secure for SMS screenshots which may contain sensitive info
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from("screenshots")
-      .getPublicUrl(filePath);
+      .createSignedUrl(filePath, 3600); // 1 hour expiry
 
-    console.log("Screenshot uploaded successfully:", publicUrl);
+    if (signedUrlError) {
+      console.error("Signed URL error:", signedUrlError);
+      return { success: false, error: signedUrlError.message };
+    }
+
+    console.log("Screenshot uploaded successfully with signed URL");
 
     return {
       success: true,
-      url: publicUrl,
+      url: signedUrlData.signedUrl,
       path: filePath,
     };
   } catch (err) {
