@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, Send, Bot, User, Minus } from "lucide-react";
+import { Send, Bot, User, Minus } from "lucide-react";
 import type { AnalysisResult } from "@/types";
 import { translations, type Language } from "@/lib/translations";
 import { chatWithAssistant } from "@/services/aiService";
@@ -22,7 +22,7 @@ export function AIChatbot({ result, language, messageContent }: AIChatbotProps) 
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   const t = (key: keyof typeof translations.english): string => {
     const lang = language as Language;
     return translations[lang]?.[key] || translations.english[key] || key;
@@ -37,7 +37,7 @@ export function AIChatbot({ result, language, messageContent }: AIChatbotProps) 
 
   const getInitialMessage = (): string => {
     const riskText = result.riskLevel === "high" ? t("high") : result.riskLevel === "medium" ? t("medium") : t("low");
-    
+
     if (language === "hindi") {
       return `मैंने संदेश का विश्लेषण किया है और पाया कि यह ${riskText} जोखिम वाला है। इस विश्लेषण या आपको क्या कदम उठाने चाहिए, इसके बारे में मुझसे कोई भी प्रश्न पूछें!`;
     } else if (language === "telugu") {
@@ -99,16 +99,15 @@ export function AIChatbot({ result, language, messageContent }: AIChatbotProps) 
       setMessages((prev) => [...prev, { role: "bot", content: response }]);
     } catch (error) {
       console.error("Chat error:", error);
-      
-      // Show error in chat
-      const errorMessage = language === "hindi" 
+
+      const errorMessage = language === "hindi"
         ? "क्षमा करें, कुछ गड़बड़ हुई। कृपया फिर से प्रयास करें।"
         : language === "telugu"
         ? "క్షమించండి, ఏదో తప్పు జరిగింది. దయచేసి మళ్ళీ ప్రయత్నించండి."
         : "Sorry, something went wrong. Please try again.";
-      
+
       setMessages((prev) => [...prev, { role: "bot", content: errorMessage }]);
-      
+
       toast({
         title: "Chat Error",
         description: error instanceof Error ? error.message : "Failed to get response",
@@ -126,15 +125,15 @@ export function AIChatbot({ result, language, messageContent }: AIChatbotProps) 
     }
   };
 
-  // Collapsed state - floating bubble
+  // Collapsed state - floating saffron bubble
   if (!isExpanded) {
     return (
-      <button 
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-primary text-primary-foreground px-5 py-3 rounded-full shadow-lg hover:bg-primary/90 transition-all duration-300 hover:scale-105"
+      <button
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-gradient-primary text-white px-5 py-3 rounded-full shadow-xl hover:opacity-90 transition-all duration-300 hover:scale-105 active:scale-95"
         onClick={() => setIsExpanded(true)}
         aria-label="Open AI Assistant"
       >
-        <MessageCircle className="h-5 w-5" />
+        <Bot className="h-5 w-5" />
         <span className="font-medium text-sm">{t("askAnything")}</span>
         {hasUnread && (
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full animate-pulse" />
@@ -145,30 +144,28 @@ export function AIChatbot({ result, language, messageContent }: AIChatbotProps) 
 
   // Expanded state - full chat interface
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-[350px] max-w-[calc(100vw-48px)] h-[500px] max-h-[calc(100vh-100px)] bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed bottom-6 right-6 z-50 w-[350px] max-w-[calc(100vw-24px)] sm:max-w-sm h-[500px] max-h-[calc(100vh-100px)] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border bg-secondary/30">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-primary">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <Bot className="h-4 w-4 text-primary" />
+          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+            <Bot className="h-4 w-4 text-white" />
           </div>
-          <span className="font-semibold text-foreground">AI Assistant</span>
+          <span className="font-semibold text-white">AI Assistant</span>
         </div>
-        <div className="flex items-center gap-1">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setIsExpanded(false)}
-            aria-label="Minimize chat"
-          >
-            <Minus className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-white hover:bg-white/20"
+          onClick={() => setIsExpanded(false)}
+          aria-label="Minimize chat"
+        >
+          <Minus className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Quick Questions */}
-      <div className="flex gap-2 p-3 border-b border-border overflow-x-auto scrollbar-hide">
+      <div className="flex gap-2 p-3 border-b border-border overflow-x-auto scrollbar-hide bg-muted/30">
         {getQuickQuestions().map((question, index) => (
           <Button
             key={index}
@@ -176,7 +173,7 @@ export function AIChatbot({ result, language, messageContent }: AIChatbotProps) 
             size="sm"
             onClick={() => handleSend(question)}
             disabled={isTyping}
-            className="text-xs whitespace-nowrap flex-shrink-0 h-7"
+            className="text-xs whitespace-nowrap flex-shrink-0 h-7 border-primary/30 text-primary hover:bg-primary/10"
           >
             {question}
           </Button>
@@ -193,8 +190,8 @@ export function AIChatbot({ result, language, messageContent }: AIChatbotProps) 
             <div
               className={`flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0 ${
                 message.role === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground"
+                  ? "bg-gradient-primary text-white"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
               {message.role === "user" ? (
@@ -204,10 +201,10 @@ export function AIChatbot({ result, language, messageContent }: AIChatbotProps) 
               )}
             </div>
             <div
-              className={`max-w-[80%] p-3 rounded-lg text-sm ${
+              className={`max-w-[80%] p-3 rounded-xl text-sm ${
                 message.role === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary/50 text-foreground"
+                  ? "bg-gradient-primary text-white rounded-tr-none"
+                  : "bg-muted text-foreground rounded-tl-none"
               }`}
             >
               <p className="whitespace-pre-line leading-relaxed">{message.content}</p>
@@ -216,14 +213,14 @@ export function AIChatbot({ result, language, messageContent }: AIChatbotProps) 
         ))}
         {isTyping && (
           <div className="flex gap-2">
-            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-secondary">
-              <Bot className="h-3.5 w-3.5" />
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-muted">
+              <Bot className="h-3.5 w-3.5 text-muted-foreground" />
             </div>
-            <div className="bg-secondary/50 p-3 rounded-lg">
-              <div className="flex gap-1">
-                <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+            <div className="bg-muted p-3 rounded-xl rounded-tl-none">
+              <div className="flex gap-1 items-center h-4">
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           </div>
@@ -246,7 +243,7 @@ export function AIChatbot({ result, language, messageContent }: AIChatbotProps) 
             onClick={() => handleSend()}
             disabled={!input.trim() || isTyping}
             size="icon"
-            className="h-10 w-10"
+            className="h-10 w-10 bg-gradient-primary hover:opacity-90 text-white"
           >
             <Send className="h-4 w-4" />
           </Button>

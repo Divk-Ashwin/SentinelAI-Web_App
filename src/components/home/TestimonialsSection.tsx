@@ -1,16 +1,15 @@
-import { Star, Quote } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Star } from "lucide-react";
 
 const testimonials = [
   {
     name: "Priya S.",
-    location: "Hyderabad",
+    location: "Hyderabad, Telangana",
     rating: 5,
     text: "This app saved me from losing ₹50,000 to a fake UPI message. The analysis was instant and detailed! I share it with everyone now.",
   },
   {
     name: "Rajesh K.",
-    location: "Mumbai",
+    location: "Mumbai, Maharashtra",
     rating: 5,
     text: "I received a suspicious Aadhaar update message. The AI detected it was a scam before I clicked anything. Very impressed!",
   },
@@ -22,7 +21,7 @@ const testimonials = [
   },
   {
     name: "Meera D.",
-    location: "Chennai",
+    location: "Chennai, Tamil Nadu",
     rating: 5,
     text: "The detailed breakdown of why a message is suspicious really helped me understand the red flags. Educational and protective!",
   },
@@ -37,7 +36,7 @@ const stats = [
 
 export function TestimonialsSection() {
   return (
-    <section className="py-20">
+    <section className="py-20 bg-muted">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -50,42 +49,46 @@ export function TestimonialsSection() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {testimonials.map((testimonial, index) => (
-            <Card
+            <div
               key={index}
-              className="bg-card border-border hover:shadow-lg transition-shadow"
+              className="bg-card border border-border rounded-2xl p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
             >
-              <CardContent className="p-6">
-                <div className="flex items-center gap-1 mb-4">
-                  {Array.from({ length: testimonial.rating }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-warning text-warning" />
-                  ))}
+              {/* Decorative quote mark */}
+              <div className="text-5xl font-serif text-primary/20 leading-none mb-1 select-none">"</div>
+
+              {/* Stars */}
+              <div className="flex items-center gap-0.5 mb-3">
+                {Array.from({ length: testimonial.rating }).map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-warning text-warning" />
+                ))}
+              </div>
+
+              <p className="text-foreground text-sm mb-4 line-clamp-4 leading-relaxed">
+                {testimonial.text}
+              </p>
+
+              <div className="flex items-center gap-3 pt-4 border-t border-border">
+                {/* Avatar: saffron gradient circle with initials */}
+                <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold text-sm">
+                    {testimonial.name[0]}
+                  </span>
                 </div>
-                <Quote className="h-8 w-8 text-primary/20 mb-2" />
-                <p className="text-foreground text-sm mb-4 line-clamp-4">
-                  {testimonial.text}
-                </p>
-                <div className="flex items-center gap-3 pt-4 border-t border-border">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-primary font-semibold text-sm">
-                      {testimonial.name[0]}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground text-sm">{testimonial.name}</p>
-                    <p className="text-xs text-muted-foreground">{testimonial.location}</p>
-                  </div>
+                <div>
+                  <p className="font-semibold text-foreground text-sm">{testimonial.name}</p>
+                  <p className="text-xs text-muted-foreground">📍 {testimonial.location}</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 p-8 bg-gradient-primary rounded-2xl">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 p-8 bg-gradient-primary rounded-2xl shadow-xl">
           {stats.map((stat) => (
             <div key={stat.label} className="text-center">
-              <p className="text-3xl md:text-4xl font-bold text-primary-foreground">{stat.value}</p>
-              <p className="text-sm text-primary-foreground/80">{stat.label}</p>
+              <p className="text-3xl md:text-4xl font-extrabold tabular-nums text-white">{stat.value}</p>
+              <p className="text-sm text-white/80">{stat.label}</p>
             </div>
           ))}
         </div>
