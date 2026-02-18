@@ -125,7 +125,7 @@ export default function History() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-muted flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -134,7 +134,7 @@ export default function History() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted">
       <Navbar />
       <main className="pt-16">
         <div className="container mx-auto px-4 py-8">
@@ -177,36 +177,44 @@ export default function History() {
               </div>
             ) : analyses.length === 0 ? (
               /* Empty State */
-              <Card className="bg-card border-border">
-                <CardContent className="py-16 text-center">
-                  <HistoryIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold text-foreground mb-2">No Analysis History Yet</h2>
-                  <p className="text-muted-foreground mb-6">Messages you analyze will appear here</p>
-                  <Button onClick={() => navigate("/analyze")} className="bg-gradient-primary">
-                    <Search className="h-4 w-4 mr-2" />
-                    Analyze Your First Message
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="bg-card border border-border rounded-2xl py-16 text-center">
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <HistoryIcon className="h-10 w-10 text-primary" />
+                </div>
+                <h2 className="text-xl font-semibold text-foreground mb-2">No Analysis History Yet</h2>
+                <p className="text-muted-foreground mb-6">Messages you analyze will appear here</p>
+                <Button onClick={() => navigate("/analyze")} className="bg-gradient-primary text-white rounded-full hover:opacity-90 transition-all hover:scale-105">
+                  <Search className="h-4 w-4 mr-2" />
+                  Analyze Your First Message
+                </Button>
+              </div>
             ) : (
               /* History List */
               <div className="space-y-4">
-                {analyses.map((analysis) => (
-                  <Card key={analysis.id} className="bg-card border-border hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
+                {analyses.map((analysis) => {
+                  const borderColor = analysis.risk_level === 'HIGH'
+                    ? 'border-l-destructive'
+                    : analysis.risk_level === 'MEDIUM'
+                    ? 'border-l-warning'
+                    : 'border-l-accent';
+                  return (
+                    <div
+                      key={analysis.id}
+                      className={`bg-card border border-border border-l-4 ${borderColor} rounded-2xl p-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300`}
+                    >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2">
                             {getRiskBadge(analysis.risk_level)}
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-sm text-muted-foreground tabular-nums">
                               Score: {analysis.risk_score}/100
                             </span>
                           </div>
-                          
-                          <p className="text-foreground line-clamp-2 mb-3">
+
+                          <p className="text-foreground line-clamp-2 mb-3 text-sm">
                             {analysis.message_content}
                           </p>
-                          
+
                           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Phone className="h-3.5 w-3.5" />
@@ -222,7 +230,7 @@ export default function History() {
                             </span>
                           </div>
                         </div>
-                        
+
                         <Button
                           variant="ghost"
                           size="icon"
@@ -232,9 +240,9 @@ export default function History() {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

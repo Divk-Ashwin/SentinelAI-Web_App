@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Upload, Calendar, Clock, Phone, MessageSquare, Languages, Loader2, X, Image, CheckCircle, AlertCircle } from "lucide-react";
+import { Search, Upload, Calendar, Clock, Phone, MessageSquare, Languages, Loader2, X, Image, CheckCircle, AlertCircle, ShieldCheck } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { toast } from "@/hooks/use-toast";
@@ -305,13 +305,13 @@ export default function Analyze() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted">
       <Navbar />
       <main className="pt-16">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
             {/* Analysis Form */}
-            <Card className="bg-card border-border">
+            <Card className="bg-card border-border rounded-2xl shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5 text-primary" />
@@ -490,7 +490,7 @@ export default function Analyze() {
                 {/* Submit Button */}
                 <Button
                   size="lg"
-                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                  className="w-full bg-gradient-primary hover:opacity-90 text-white rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
                   onClick={analyzeMessage}
                   disabled={isAnalyzing || isUploading || !formData.phone || !formData.message}
                 >
@@ -501,8 +501,8 @@ export default function Analyze() {
                     </>
                   ) : (
                     <>
-                      <Search className="h-5 w-5 mr-2" />
-                      🔍 Analyze Message
+                      <ShieldCheck className="h-5 w-5 mr-2" />
+                      Analyze Message
                     </>
                   )}
                 </Button>

@@ -79,7 +79,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif"],
+        sans: ["Mukta", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
       },
       boxShadow: {
         sm: "var(--shadow-sm)",

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendingUp, Shield } from "lucide-react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -18,14 +19,35 @@ const sectorData = [
 ];
 
 const stats = [
-  { value: "₹1,247 Cr", label: "Lost to SMS fraud in India (2023)" },
-  { value: "67%", label: "Of victims live in rural areas" },
-  { value: "78%", label: "Don't know how to spot scams" },
+  {
+    value: "₹1,247 Cr",
+    label: "Lost to SMS fraud in India (2023)",
+    borderColor: "border-l-destructive",
+    valueColor: "text-destructive",
+    icon: TrendingUp,
+    iconColor: "text-destructive",
+  },
+  {
+    value: "67%",
+    label: "Of victims live in rural areas",
+    borderColor: "border-l-warning",
+    valueColor: "text-warning",
+    icon: TrendingUp,
+    iconColor: "text-warning",
+  },
+  {
+    value: "78%",
+    label: "Don't know how to spot scams",
+    borderColor: "border-l-primary",
+    valueColor: "text-primary",
+    icon: Shield,
+    iconColor: "text-primary",
+  },
 ];
 
 export function StatisticsSection() {
   return (
-    <section id="statistics" className="py-20 bg-secondary/30">
+    <section id="statistics" className="py-20 bg-muted">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -36,14 +58,18 @@ export function StatisticsSection() {
         {/* Stats Grid */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {stats.map((stat) => (
-            <Card key={stat.label} className="bg-card border-border text-center">
-              <CardContent className="pt-6">
-                <p className="text-3xl md:text-4xl font-bold text-primary mb-2">
+            <div
+              key={stat.label}
+              className={`bg-card rounded-2xl border border-border border-l-4 ${stat.borderColor} p-6 hover:-translate-y-1 hover:shadow-lg transition-all duration-300`}
+            >
+              <div className="flex items-start justify-between mb-2">
+                <p className={`text-3xl md:text-4xl font-extrabold tabular-nums ${stat.valueColor}`}>
                   {stat.value}
                 </p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </CardContent>
-            </Card>
+                <stat.icon className={`h-5 w-5 mt-1 ${stat.iconColor}`} />
+              </div>
+              <p className="text-sm text-muted-foreground">{stat.label}</p>
+            </div>
           ))}
         </div>
 

@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Shield, Menu, Settings, HelpCircle, LogOut } from "lucide-react";
+import { ShieldCheck, Menu, Settings, HelpCircle, LogOut } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -55,7 +55,7 @@ export function Navbar() {
 
   const handleLogout = async () => {
     const { error } = await signOut();
-    
+
     if (error) {
       toast({
         title: "Logout failed",
@@ -64,7 +64,7 @@ export function Navbar() {
       });
       return;
     }
-    
+
     toast({
       title: "Logged out successfully",
       duration: 3000,
@@ -98,16 +98,16 @@ export function Navbar() {
     <header
       className={`fixed top-0 left-0 right-0 z-[1000] w-full transition-all duration-300 ${
         isScrolled
-          ? "bg-background shadow-[0_2px_8px_rgba(0,0,0,0.1)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] border-b border-border"
-          : "bg-background"
+          ? "bg-background/80 backdrop-blur-md border-b border-border shadow-lg shadow-primary/10"
+          : "bg-background/80 backdrop-blur-md border-b border-border"
       }`}
     >
       <div className="container mx-auto px-4">
         <nav className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-primary">
-              <Shield className="h-5 w-5 text-primary-foreground" />
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-primary shadow-md">
+              <ShieldCheck className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold text-foreground">SentinelAI</span>
           </Link>
@@ -118,13 +118,16 @@ export function Navbar() {
               <button
                 key={link.label}
                 onClick={() => handleNavClick(link.href)}
-                className={`px-4 py-2 text-sm font-medium transition-colors rounded-md ${
+                className={`px-4 py-2 text-sm font-medium transition-colors duration-150 relative ${
                   isActive(link.href)
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {link.label}
+                {isActive(link.href) && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+                )}
               </button>
             ))}
           </div>
@@ -132,11 +135,11 @@ export function Navbar() {
           {/* Desktop Right Side */}
           <div className="hidden lg:flex items-center gap-3">
             <ThemeToggle />
-            
+
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-semibold text-sm border-2 border-primary hover:scale-105 hover:shadow-lg transition-all duration-200">
+                  <button className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-primary text-white font-semibold text-sm hover:scale-105 hover:shadow-lg transition-all duration-200">
                     {getInitials(user.user_metadata?.full_name, user.email)}
                   </button>
                 </DropdownMenuTrigger>
@@ -164,12 +167,12 @@ export function Navbar() {
             ) : (
               <>
                 <Link to="/auth">
-                  <Button variant="outline" size="sm">
+                  <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-primary/10">
                     Login
                   </Button>
                 </Link>
                 <Link to="/auth?tab=register">
-                  <Button size="sm" className="bg-gradient-primary hover:opacity-90 transition-opacity">
+                  <Button size="sm" className="bg-gradient-primary hover:opacity-90 transition-opacity text-white rounded-full px-5">
                     Sign Up
                   </Button>
                 </Link>
@@ -187,57 +190,57 @@ export function Navbar() {
                   <span className="sr-only">Toggle menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] bg-background">
+              <SheetContent side="right" className="w-[300px] bg-gradient-hero border-l border-white/10">
                 <div className="flex flex-col gap-6 mt-6">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-primary">
-                      <Shield className="h-5 w-5 text-primary-foreground" />
+                      <ShieldCheck className="h-5 w-5 text-white" />
                     </div>
-                    <span className="text-xl font-bold">SentinelAI</span>
+                    <span className="text-xl font-bold text-white">SentinelAI</span>
                   </div>
-                  
+
                   {user && (
-                    <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-semibold text-sm">
+                    <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl border border-white/10">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-primary text-white font-semibold text-sm">
                         {getInitials(user.user_metadata?.full_name, user.email)}
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">{getUserDisplayName()}</p>
-                        <p className="text-xs text-muted-foreground truncate max-w-[180px]">{user.email}</p>
+                        <p className="font-medium text-white">{getUserDisplayName()}</p>
+                        <p className="text-xs text-white/50 truncate max-w-[180px]">{user.email}</p>
                       </div>
                     </div>
                   )}
-                  
-                  <div className="flex flex-col gap-2">
+
+                  <div className="flex flex-col gap-1">
                     {navLinks.map((link) => (
                       <button
                         key={link.label}
                         onClick={() => handleNavClick(link.href)}
-                        className={`px-4 py-3 text-sm font-medium rounded-md text-left ${
+                        className={`px-4 py-3 text-sm font-medium rounded-xl text-left transition-colors ${
                           isActive(link.href)
                             ? "text-primary bg-primary/10"
-                            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                            : "text-white/70 hover:text-white hover:bg-white/10"
                         }`}
                       >
                         {link.label}
                       </button>
                     ))}
                   </div>
-                  
-                  <div className="flex flex-col gap-3 pt-4 border-t border-border">
+
+                  <div className="flex flex-col gap-3 pt-4 border-t border-white/10">
                     {user ? (
                       <>
-                        <Button 
-                          variant="outline" 
-                          className="w-full justify-start"
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start border-white/20 text-white hover:bg-white/10"
                           onClick={() => { setIsOpen(false); navigate("/settings"); }}
                         >
                           <Settings className="h-4 w-4 mr-2" />
                           Settings
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          className="w-full justify-start text-destructive hover:text-destructive"
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
                           onClick={() => { setIsOpen(false); handleLogout(); }}
                         >
                           <LogOut className="h-4 w-4 mr-2" />
@@ -247,12 +250,12 @@ export function Navbar() {
                     ) : (
                       <>
                         <Link to="/auth" onClick={() => setIsOpen(false)}>
-                          <Button variant="outline" className="w-full">
+                          <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10">
                             Login
                           </Button>
                         </Link>
                         <Link to="/auth?tab=register" onClick={() => setIsOpen(false)}>
-                          <Button className="w-full bg-gradient-primary">
+                          <Button className="w-full bg-gradient-primary text-white rounded-full">
                             Sign Up
                           </Button>
                         </Link>

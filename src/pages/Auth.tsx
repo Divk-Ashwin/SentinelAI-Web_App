@@ -172,26 +172,24 @@ export default function AuthPage() {
   // Show loading while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-gradient-hero" />
-      
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-hero">
       <div className="relative z-10 w-full max-w-md">
         {/* Logo */}
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-primary">
-            <Shield className="h-6 w-6 text-primary-foreground" />
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-primary shadow-md">
+            <Shield className="h-6 w-6 text-white" />
           </div>
-          <span className="text-2xl font-bold text-foreground">SentinelAI</span>
+          <span className="text-2xl font-bold text-white">SentinelAI</span>
         </Link>
 
-        <Card className="bg-card border-border shadow-xl">
+        <Card className="bg-card border-border shadow-2xl shadow-primary/20 rounded-3xl">
           {showEmailConfirmation ? (
             <CardContent className="pt-6 pb-8">
               <div className="text-center space-y-4">
@@ -298,7 +296,7 @@ export default function AuthPage() {
                     )}
                   </div>
 
-                  <Button type="submit" className="w-full bg-gradient-primary" disabled={isLoading}>
+          <Button type="submit" className="w-full bg-gradient-primary text-white rounded-full" disabled={isLoading}>
                     {isLoading ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -451,7 +449,7 @@ export default function AuthPage() {
                     )}
                   </div>
 
-                  <Button type="submit" className="w-full bg-gradient-primary" disabled={isLoading}>
+                  <Button type="submit" className="w-full bg-gradient-primary text-white rounded-full" disabled={isLoading}>
                     {isLoading ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -517,7 +515,7 @@ export default function AuthPage() {
           )}
         </Card>
 
-        <p className="text-center text-sm text-muted-foreground mt-6">
+        <p className="text-center text-sm text-white/50 mt-6">
           By continuing, you agree to our{" "}
           <Link to="/terms" className="text-primary hover:underline">Terms</Link>
           {" "}and{" "}
