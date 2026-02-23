@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, Search, Calendar, Clock, Phone, MessageSquare, Languages, Loader2, Info, CheckCircle, ArrowRight } from "lucide-react";
+import { Shield, Search, Calendar, Clock, Phone, MessageSquare, Languages, Loader2, Info, CheckCircle, ArrowRight, Upload, X, Image, ShieldCheck } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { toast } from "@/hooks/use-toast";
@@ -35,6 +35,12 @@ export default function Demo() {
   const [phoneValid, setPhoneValid] = useState<boolean | null>(true);
   const [phoneError, setPhoneError] = useState("");
   
+  // Screenshot state (demo-only, no actual upload)
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [formData, setFormData] = useState({
     language: "english",
     phone: SAMPLE_MESSAGE.phone,
@@ -49,6 +55,34 @@ export default function Demo() {
     "Scanning for malicious links...",
     "Generating risk report...",
   ];
+
+  // Screenshot handlers (demo-only)
+  const handleFileSelect = (file: File) => {
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      toast({ title: "Invalid file type", description: "Please upload PNG or JPG only", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Maximum file size is 5MB", variant: "destructive" });
+      return;
+    }
+    setUploadedFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setFilePreview(reader.result as string);
+    reader.readAsDataURL(file);
+    toast({ title: "Screenshot uploaded", description: file.name });
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileSelect(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); };
+  const handleDrop = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); const file = e.dataTransfer.files?.[0]; if (file) handleFileSelect(file); };
+  const removeFile = () => { setUploadedFile(null); setFilePreview(null); if (fileInputRef.current) fileInputRef.current.value = ''; };
 
   // Phone number validation
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -296,10 +330,72 @@ export default function Demo() {
                   </div>
                 </div>
 
+                {/* Screenshot Upload */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    Screenshot (Optional)
+                  </Label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    onChange={handleFileInputChange}
+                    className="hidden"
+                    id="demo-screenshot-upload"
+                  />
+                  
+                  {!uploadedFile ? (
+                    <div 
+                      className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+                        isDragging 
+                          ? "border-primary bg-primary/10" 
+                          : "border-border hover:border-primary/50"
+                      }`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        Click to upload or drag and drop
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Max 5MB • PNG, JPG
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="border border-border rounded-lg p-4">
+                      <div className="flex items-center gap-4">
+                        {filePreview && (
+                          <img 
+                            src={filePreview} 
+                            alt="Screenshot preview" 
+                            className="h-16 w-16 object-cover rounded-lg border border-border"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Image className="h-4 w-4 text-primary" />
+                            <span className="text-sm font-medium truncate">{uploadedFile.name}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {(uploadedFile.size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={removeFile}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Submit Button */}
                 <Button
                   size="lg"
-                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                  className="w-full bg-gradient-primary hover:opacity-90 text-white rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
                   onClick={analyzeMessage}
                   disabled={isAnalyzing || demoCount >= 3}
                 >
@@ -312,7 +408,7 @@ export default function Demo() {
                     "Sign up to continue"
                   ) : (
                     <>
-                      <Search className="h-5 w-5 mr-2" />
+                      <ShieldCheck className="h-5 w-5 mr-2" />
                       Analyze This Sample
                     </>
                   )}
