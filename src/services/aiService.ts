@@ -46,6 +46,13 @@ export async function analyzeSMSMessage(
   });
 
   if (error) {
+    // Extract real error message from the edge function response body
+    try {
+      const body = await (error as any).context?.json?.();
+      if (body?.error) throw new Error(body.error);
+    } catch (inner) {
+      if (inner instanceof Error && inner.message !== error.message) throw inner;
+    }
     throw new Error(error.message || "Analysis failed");
   }
 
