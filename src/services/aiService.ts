@@ -1,8 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { AnalysisResult, Language } from "@/types";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-
 interface AnalyzeSMSResponse {
   riskScore: number;
   riskLevel: "low" | "medium" | "high";
@@ -38,50 +36,23 @@ interface ChatMessage {
   content: string;
 }
 
-/**
- * Get the current user's JWT token for authenticated API calls
- */
-async function getAuthToken(): Promise<string> {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  
-  if (error || !session) {
-    throw new Error("You must be logged in to use this feature");
-  }
-  
-  return session.access_token;
-}
-
-/**
- * Analyze an SMS message for scam indicators using AI
- * Requires authenticated user
- */
 export async function analyzeSMSMessage(
   messageContent: string,
   senderPhone: string,
   language: Language
 ): Promise<AnalysisResult> {
-  const token = await getAuthToken();
-
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-sms`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      messageContent,
-      senderPhone,
-      language,
-    }),
+  const { data, error } = await supabase.functions.invoke<AnalyzeSMSResponse>("analyze-sms", {
+    body: { messageContent, senderPhone, language },
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Analysis failed: ${response.status}`);
+  if (error) {
+    throw new Error(error.message || "Analysis failed");
   }
 
-  const data: AnalyzeSMSResponse = await response.json();
-  
+  if (!data) {
+    throw new Error("No response from analysis service");
+  }
+
   return {
     riskScore: data.riskScore,
     riskLevel: data.riskLevel,
@@ -95,10 +66,6 @@ export async function analyzeSMSMessage(
   };
 }
 
-/**
- * Chat with AI assistant about the analysis
- * Requires authenticated user
- */
 export async function chatWithAssistant(
   userQuestion: string,
   analysisContext: {
@@ -111,27 +78,17 @@ export async function chatWithAssistant(
   language: Language,
   chatHistory: ChatMessage[] = []
 ): Promise<string> {
-  const token = await getAuthToken();
-
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/chat-assistant`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      userQuestion,
-      analysisContext,
-      language,
-      chatHistory,
-    }),
+  const { data, error } = await supabase.functions.invoke<ChatResponse>("chat-assistant", {
+    body: { userQuestion, analysisContext, language, chatHistory },
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Chat failed: ${response.status}`);
+  if (error) {
+    throw new Error(error.message || "Chat failed");
   }
 
-  const data: ChatResponse = await response.json();
+  if (!data) {
+    throw new Error("No response from chat service");
+  }
+
   return data.response;
 }

@@ -37,8 +37,9 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Verify the JWT and get user
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Verify the JWT and get user (pass token explicitly for edge function context)
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
 
     if (userError || !user) {
       console.log("Invalid or expired token:", userError?.message);
