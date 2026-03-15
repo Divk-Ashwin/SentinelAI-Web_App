@@ -207,7 +207,7 @@ Return a JSON object with this exact structure:
       },
     };
 
-    console.log("Analysis complete for user:", userId);
+    console.log("Analysis complete.");
 
     return new Response(
       JSON.stringify(normalizedResult),

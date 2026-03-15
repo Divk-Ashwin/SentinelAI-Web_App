@@ -136,7 +136,7 @@ If they've already been scammed, prioritize immediate action steps.`;
       throw new Error("No content in AI response");
     }
 
-    console.log("Chat response generated for user:", userId);
+    console.log("Chat response generated.");
 
     return new Response(
       JSON.stringify({ response: content }),
