@@ -14,36 +14,7 @@ import { AnalysisReport } from "@/components/dashboard/AnalysisReport";
 import { AnalysisHistory } from "@/components/dashboard/AnalysisHistory";
 import { AIChatbot } from "@/components/dashboard/AIChatbot";
 import { useAuth } from "@/contexts/AuthContext";
-
-export interface AnalysisResult {
-  riskScore: number;
-  riskLevel: "low" | "medium" | "high";
-  confidence: number;
-  verdict: string;
-  action: string;
-  threats: {
-    title: string;
-    description: string;
-    severity: "high" | "medium" | "low";
-  }[];
-  senderAnalysis: {
-    phone: string;
-    inContacts: boolean;
-    reportCount: number;
-    isNew: boolean;
-  };
-  contentAnalysis: {
-    hasLinks: boolean;
-    linkDomain?: string;
-    hasUrgency: boolean;
-    grammarScore: number;
-    keywords: string[];
-  };
-  recommendations: {
-    do: string[];
-    dont: string[];
-  };
-}
+import type { AnalysisResult } from "@/types";
 
 export default function Dashboard() {
   const navigate = useNavigate();

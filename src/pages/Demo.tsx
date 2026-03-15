@@ -13,7 +13,7 @@ import { Footer } from "@/components/Footer";
 import { toast } from "@/hooks/use-toast";
 import { AnalysisReport } from "@/components/dashboard/AnalysisReport";
 import { AIChatbot } from "@/components/dashboard/AIChatbot";
-import type { AnalysisResult } from "@/pages/Analyze";
+import type { AnalysisResult } from "@/types";
 
 // Sample scam message for demo
 const SAMPLE_MESSAGE = {

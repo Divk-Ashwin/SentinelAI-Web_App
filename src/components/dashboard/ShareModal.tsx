@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageCircle, Mail, MessageSquare, Copy, Lock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import type { AnalysisResult } from "@/pages/Dashboard";
+import type { AnalysisResult } from "@/types";
 
 interface ShareModalProps {
   isOpen: boolean;

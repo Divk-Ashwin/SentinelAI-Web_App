@@ -11,9 +11,9 @@
 | **Name** | SentinelAI |
 | **Mission** | Empower every Indian to identify and prevent SMS fraud (smishing) through accessible AI technology |
 | **Target Audience** | Rural India |
-| **Live URL** | https://sentinelai-web.lovable.app |
+| **Live URL** | https://sentinelai-web-app.vercel.app |
 | **Languages** | English, Hindi (हिंदी), Telugu (తెలుగు) |
-| **Repository** | Lovable-managed React project |
+| **Repository** | React + Vite standalone project |
 
 ---
 
@@ -26,8 +26,8 @@
 | **State Management** | React Query (TanStack), React Context (Auth) |
 | **Routing** | React Router DOM v6 |
 | **Form Validation** | Zod, React Hook Form |
-| **Backend** | Lovable Cloud (Supabase) — Database, Auth, Storage, Edge Functions |
-| **AI Model** | Google Gemini 3 Flash Preview via Lovable AI Gateway |
+| **Backend** | Supabase — Database, Auth, Storage, Edge Functions |
+| **AI Model** | Google Gemini 2.0 Flash via Google AI API |
 | **Font** | Inter (Google Fonts) |
 | **Icons** | Lucide React |
 | **Notifications** | Sonner (toast) |
@@ -65,10 +65,10 @@
 
 | Aspect | Detail |
 |---|---|
-| **Providers** | Email/Password + Google OAuth (Lovable Cloud managed) |
+| **Providers** | Email/Password + Google OAuth |
 | **Email confirmation** | Required (NOT auto-confirmed) |
 | **Auth context** | `AuthContext` in `src/contexts/AuthContext.tsx` wraps entire app |
-| **Google OAuth** | Uses `lovable.auth.signInWithOAuth('google')` |
+| **Google OAuth** | Uses `supabase.auth.signInWithOAuth('google')` |
 | **Protected routes** | `/analyze`, `/history`, `/settings` |
 | **Profile auto-creation** | `handle_new_user()` database trigger on `auth.users` INSERT |
 | **Trigger hardening** | Input validation, 100-char name limit, SQL injection prevention |
@@ -270,7 +270,7 @@ Users can only access their own data. No public read access on any table.
 ### `analyze-sms` (`supabase/functions/analyze-sms/index.ts`)
 - **Auth**: JWT validation required
 - **Input**: `messageContent`, `senderPhone`, `language`
-- **AI Call**: Lovable AI Gateway → Google Gemini 3 Flash Preview
+- **AI Call**: Google AI API → Google Gemini 2.0 Flash
 - **Prompt**: Structured JSON output format for risk assessment
 - **Output**: `{ riskScore, riskLevel, confidence, verdict, action, threats[], senderAnalysis, contentAnalysis, recommendations }`
 - **Error handling**: 401 (auth), 429 (rate limit), 402 (service unavailable)
@@ -278,7 +278,7 @@ Users can only access their own data. No public read access on any table.
 ### `chat-assistant` (`supabase/functions/chat-assistant/index.ts`)
 - **Auth**: JWT validation required
 - **Input**: `userQuestion`, `analysisContext`, `language`, `chatHistory[]`
-- **AI Call**: Lovable AI Gateway → Google Gemini 3 Flash Preview
+- **AI Call**: Google AI API → Google Gemini 2.0 Flash
 - **Context**: Includes analyzed message details, risk level, threats
 - **History**: Maintains last 10 messages for conversation continuity
 - **Safety info**: India Cyber Crime Helpline 1930, cybercrime.gov.in
@@ -446,7 +446,6 @@ sentinelai/
 │   │   ├── use-theme.tsx               # Theme management
 │   │   └── use-toast.ts                # Toast notifications
 │   ├── integrations/
-│   │   ├── lovable/index.ts            # Lovable Cloud client
 │   │   └── supabase/
 │   │       ├── client.ts               # Auto-generated Supabase client
 │   │       └── types.ts                # Auto-generated database types
@@ -541,7 +540,7 @@ interface AnalysisResult {
 | `VITE_SUPABASE_URL` | Auto-generated (.env) | Edge function base URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Auto-generated (.env) | Supabase client initialization |
 | `VITE_SUPABASE_PROJECT_ID` | Auto-generated (.env) | Project identification |
-| `LOVABLE_API_KEY` | Edge function runtime | AI Gateway authentication (server-side only) |
+| `GEMINI_API_KEY` | Edge function runtime | Google AI API authentication (server-side only) |
 | `SUPABASE_URL` | Edge function runtime | Supabase client in edge functions |
 | `SUPABASE_ANON_KEY` | Edge function runtime | Supabase client in edge functions |
 

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { ShareModal } from "./ShareModal";
-import type { AnalysisResult } from "@/pages/Dashboard";
+import type { AnalysisResult } from "@/types";
 
 interface HistoryItem {
   id: string;

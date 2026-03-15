@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { ShareModal } from "./ShareModal";
-import type { AnalysisResult } from "@/pages/Dashboard";
+import type { AnalysisResult } from "@/types";
 import { translations, type Language } from "@/lib/translations";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
