@@ -18,25 +18,15 @@ serve(async (req) => {
   }
 
   try {
-    // ============================================
-    // AUTHENTICATION CHECK - Validate JWT token
-    // ============================================
+    // Supabase gateway already verified the JWT before reaching this function.
+    // No need to re-decode the token — just confirm the header is present.
     const authHeader = req.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      console.log("Missing or invalid authorization header");
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // Supabase gateway already verified the JWT before reaching this function.
-    // Decode userId directly from the JWT payload — no extra network call needed.
-    const token = authHeader.replace("Bearer ", "");
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    const userId = payload.sub as string;
-    console.log("Authenticated user:", userId);
-    // ============================================
 
     const { messageContent, senderPhone, language } = await req.json() as AnalyzeRequest;
 
