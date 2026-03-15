@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,25 +30,11 @@ serve(async (req) => {
       );
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    // Verify the JWT and get user (pass token explicitly for edge function context)
+    // Supabase gateway already verified the JWT before reaching this function.
+    // Decode userId directly from the JWT payload — no extra network call needed.
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
-
-    if (userError || !user) {
-      console.log("Invalid or expired token:", userError?.message);
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const userId = user.id;
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const userId = payload.sub as string;
     console.log("Authenticated user:", userId);
     // ============================================
 
