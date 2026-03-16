@@ -37,9 +37,9 @@ serve(async (req) => {
       );
     }
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+    if (!GROQ_API_KEY) {
+      throw new Error("GROQ_API_KEY is not configured");
     }
 
     const languageInstructions = {
@@ -48,24 +48,32 @@ serve(async (req) => {
       telugu: "Respond in Telugu (తెలుగు)"
     };
 
-    const systemPrompt = `You are an expert at detecting SMS fraud and scams in India. Analyze messages for scam indicators and provide safety recommendations.
+    const systemPrompt = `You are an expert at detecting SMS fraud and scams in India. Analyze messages and provide specific, message-relevant safety advice.
 
 You MUST respond with ONLY a valid JSON object - no markdown, no code blocks, no additional text.
+
+CRITICAL DISTINCTION — apply this before scoring:
+- A message that DELIVERS a one-time code or OTP TO the user (e.g., "Your Coinbase code is 783215. Do not share this.") is a LEGITIMATE 2FA message. Score these LOW (5-20).
+- The phrase "do not share this code with anyone" is a SECURITY WARNING from a legitimate service — it is NOT a scam indicator.
+- The phrase "if you have not requested this, please call [number]" is a standard security notice from a legitimate service — NOT a scam indicator.
+- A message that ASKS you to share your OTP, password, PIN, or account details IS a phishing scam. Score HIGH (75-100).
+- Known services (banks, Coinbase, Google, Amazon, delivery services) sending OTP codes or delivery alerts are legitimate.
 
 Analyze for these threat indicators:
 - Suspicious links (shortened URLs like bit.ly, fake domains)
 - Urgency tactics (immediate action required, threats, deadlines)
-- Requests for personal info (OTP, password, CVV, PIN, Aadhaar)
-- Impersonation (banks, government, courier services, telecom)
+- Requests for personal info (OTP, password, CVV, PIN, Aadhaar) — only if the message is asking you to provide them
+- Impersonation of known services with fake sender numbers
 - Too-good-to-be-true offers (lottery wins, prizes, free money)
 - Poor grammar and spelling mistakes
-- Unknown sender numbers
-- Pressure tactics and fear mongering
 
 Risk scoring guidelines:
-- 0-35: LOW risk (legitimate messages, known senders, no suspicious elements)
+- 0-20: SAFE (legitimate 2FA OTP, bank alerts, delivery notifications from known services)
+- 21-35: LOW risk (legitimate messages, minor unusual elements)
 - 36-65: MEDIUM risk (some suspicious elements, verify before acting)
 - 66-100: HIGH risk (clear scam indicators, do not engage)
+
+Recommendations MUST be specific to this exact message — not generic advice. Reference the actual message content, sender, or specific risk found.
 
 ${languageInstructions[language]}`;
 
@@ -96,27 +104,28 @@ Return a JSON object with this exact structure:
   },
   "contentAnalysis": {
     "hasLinks": <boolean>,
-    "linkDomain": "<domain if link present or null>",
+    "linkDomain": "<domain if link present, otherwise null>",
     "hasUrgency": <boolean>,
     "grammarScore": <1-10>,
-    "keywords": ["<suspicious keywords found>"]
+    "keywords": ["<suspicious keyword found in message>"],
+    "triggerPhrases": ["<exact phrase or word from the message that most influenced the risk score>"]
   },
   "recommendations": {
-    "do": ["<action 1>", "<action 2>", "<action 3>", "<action 4>"],
-    "dont": ["<thing to avoid 1>", "<thing to avoid 2>", "<thing to avoid 3>", "<thing to avoid 4>"]
+    "do": ["<specific action relevant to THIS message>", "<specific action>", "<specific action>", "<specific action>"],
+    "dont": ["<specific thing to avoid relevant to THIS message>", "<specific thing>", "<specific thing>", "<specific thing>"]
   }
 }`;
 
     console.log("Calling AI gateway for analysis...");
 
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${GEMINI_API_KEY}`,
+        Authorization: `Bearer ${GROQ_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gemini-2.0-flash",
+        model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -126,21 +135,9 @@ Return a JSON object with this exact structure:
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI service temporarily unavailable. Please try again later." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error(`AI gateway error: ${response.status}`);
+      console.error(`Groq error ${response.status}:`, errorText);
+      throw new Error(`Groq ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
@@ -193,8 +190,11 @@ Return a JSON object with this exact structure:
         linkDomain: analysisResult.contentAnalysis?.linkDomain || undefined,
         hasUrgency: Boolean(analysisResult.contentAnalysis?.hasUrgency),
         grammarScore: Math.min(10, Math.max(1, Number(analysisResult.contentAnalysis?.grammarScore) || 5)),
-        keywords: Array.isArray(analysisResult.contentAnalysis?.keywords) 
-          ? analysisResult.contentAnalysis.keywords 
+        keywords: Array.isArray(analysisResult.contentAnalysis?.keywords)
+          ? analysisResult.contentAnalysis.keywords
+          : [],
+        triggerPhrases: Array.isArray(analysisResult.contentAnalysis?.triggerPhrases)
+          ? analysisResult.contentAnalysis.triggerPhrases
           : [],
       },
       recommendations: {

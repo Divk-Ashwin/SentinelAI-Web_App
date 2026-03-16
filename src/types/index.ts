@@ -30,6 +30,7 @@ export interface ContentAnalysis {
   hasUrgency: boolean;
   grammarScore: number;
   keywords: string[];
+  triggerPhrases?: string[];
 }
 
 // Recommendations

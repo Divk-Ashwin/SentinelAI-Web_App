@@ -2,21 +2,16 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { 
-  AlertTriangle, 
-  CheckCircle, 
-  XCircle, 
-  Shield, 
-  Phone, 
-  Link2, 
-  Clock, 
+import {
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Shield,
+  Phone,
+  Link2,
   AlertCircle,
   Share2,
   Download,
-  Trash2,
-  Ban,
-  Users,
-  PhoneCall,
   ThumbsUp,
   ThumbsDown,
   Info
@@ -126,10 +121,29 @@ export function AnalysisReport({ result, language }: AnalysisReportProps) {
                 </span>
                 <span className="text-2xl text-muted-foreground">/100</span>
               </div>
-              <Progress 
-                value={result.riskScore} 
+              <Progress
+                value={result.riskScore}
                 className="h-3"
               />
+              {result.contentAnalysis.triggerPhrases && result.contentAnalysis.triggerPhrases.length > 0 && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-muted-foreground shrink-0">Key phrases:</span>
+                  {result.contentAnalysis.triggerPhrases.map((phrase, index) => (
+                    <span
+                      key={index}
+                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        result.riskLevel === "low"
+                          ? "bg-success/20 text-success"
+                          : result.riskLevel === "medium"
+                          ? "bg-warning/20 text-warning"
+                          : "bg-destructive/20 text-destructive"
+                      }`}
+                    >
+                      "{phrase}"
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -177,81 +191,37 @@ export function AnalysisReport({ result, language }: AnalysisReportProps) {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Immediate Actions */}
-          <div>
-            <h4 className="flex items-center gap-2 font-semibold text-success mb-4">
-              <CheckCircle className="h-5 w-5" />
-              {t("immediateActions")}
-            </h4>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div className="flex items-center gap-3 p-3 bg-success/10 rounded-lg">
-                <Trash2 className="h-5 w-5 text-success flex-shrink-0" />
-                <span className="text-sm">{t("deleteMessage")}</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-success/10 rounded-lg">
-                <Ban className="h-5 w-5 text-success flex-shrink-0" />
-                <span className="text-sm">{t("blockNumber")}</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-success/10 rounded-lg">
-                <Users className="h-5 w-5 text-success flex-shrink-0" />
-                <span className="text-sm">{t("tellFriends")}</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-success/10 rounded-lg">
-                <PhoneCall className="h-5 w-5 text-success flex-shrink-0" />
-                <span className="text-sm">{t("callBank")}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Do NOT */}
-          <div>
-            <h4 className="flex items-center gap-2 font-semibold text-destructive mb-4">
-              <XCircle className="h-5 w-5" />
-              {t("doNot")}
-            </h4>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg">
-                <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
-                <span className="text-sm">{t("dontClickLinks")}</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg">
-                <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
-                <span className="text-sm">{t("dontShareOTP")}</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg">
-                <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
-                <span className="text-sm">{t("dontCallBack")}</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg">
-                <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
-                <span className="text-sm">{t("dontSendMoney")}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* If Already Clicked */}
-          {result.riskLevel !== "low" && (
+          {result.recommendations.do.length > 0 && (
             <div>
-              <h4 className="flex items-center gap-2 font-semibold text-warning mb-4">
-                <AlertTriangle className="h-5 w-5" />
-                {t("ifAlreadyClicked")}
+              <h4 className="flex items-center gap-2 font-semibold text-success mb-4">
+                <CheckCircle className="h-5 w-5" />
+                {t("immediateActions")}
               </h4>
               <div className="grid sm:grid-cols-2 gap-3">
-                <div className="flex items-center gap-3 p-3 bg-warning/10 rounded-lg">
-                  <PhoneCall className="h-5 w-5 text-warning flex-shrink-0" />
-                  <span className="text-sm">{t("callBankImmediately")}</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-warning/10 rounded-lg">
-                  <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0" />
-                  <span className="text-sm">{t("reportCyberCrime")}</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-warning/10 rounded-lg">
-                  <Ban className="h-5 w-5 text-warning flex-shrink-0" />
-                  <span className="text-sm">{t("blockCard")}</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-warning/10 rounded-lg">
-                  <Shield className="h-5 w-5 text-warning flex-shrink-0" />
-                  <span className="text-sm">{t("changePasswords")}</span>
-                </div>
+                {result.recommendations.do.map((action, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 bg-success/10 rounded-lg">
+                    <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                    <span className="text-sm">{action}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Do NOT */}
+          {result.recommendations.dont.length > 0 && (
+            <div>
+              <h4 className="flex items-center gap-2 font-semibold text-destructive mb-4">
+                <XCircle className="h-5 w-5" />
+                {t("doNot")}
+              </h4>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {result.recommendations.dont.map((item, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg">
+                    <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                    <span className="text-sm">{item}</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}

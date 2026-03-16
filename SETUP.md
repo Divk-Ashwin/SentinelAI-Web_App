@@ -13,11 +13,9 @@ Everything below is **already done** for the live deployment. This section is a 
 - [x] SentinelAI favicon (replaced Lovable logo)
 - [x] Fast loading / splash screen
 - [x] Edge functions deployed with `--no-verify-jwt` (see note below)
-- [x] `GEMINI_API_KEY` set as Supabase secret
-
-### What to verify tomorrow
-- [ ] **Test the Analyze feature** — was hitting Gemini rate limit from debugging calls; should be clear by morning
-- [ ] **Test the AI Chat assistant** — no rate limit issue expected, but untested after the fixes
+- [x] `GROQ_API_KEY` set as Supabase secret (switched from Gemini — Google free tier had `limit: 0` quota)
+- [x] **Analyze feature fully working** — AI analysis runs and saves to database
+- [x] Missing `sender_analysis` column added to `analyses` table via migration
 
 ### Key fix applied this session (important context)
 
@@ -68,16 +66,16 @@ This creates the `analyses`, `profiles`, and related tables in your Supabase pro
 
 ---
 
-### 2. Gemini API Key (Required for AI features)
+### 2. Groq API Key (Required for AI features)
 
-Both edge functions use Google's Gemini 2.0 Flash model via the Google AI API.
+Both edge functions use **Groq** (Llama 3.3 70B) via the Groq API. Free, no billing required, OpenAI-compatible.
 
 **Set it as a Supabase secret:**
 ```bash
-supabase secrets set GEMINI_API_KEY=your_key_here
+supabase secrets set GROQ_API_KEY=your_key_here
 ```
 
-Already set. Key is confirmed in `supabase secrets list`.
+Already set. Get a free key at [console.groq.com](https://console.groq.com).
 
 ---
 
@@ -115,6 +113,6 @@ If you want Google sign-in to work:
 |---|---|
 | Supabase project | [supabase.com/dashboard/project/aropfnepavvqutztpaop](https://supabase.com/dashboard/project/aropfnepavvqutztpaop) |
 | Vercel deployment | [sentinelai-web-app.vercel.app](https://sentinelai-web-app.vercel.app) |
-| Gemini API key | [aistudio.google.com](https://aistudio.google.com) |
+| Groq API key | [console.groq.com](https://console.groq.com) |
 | Edge function logs | Supabase dashboard → Edge Functions |
 | Vercel logs | Vercel dashboard → Deployments |
